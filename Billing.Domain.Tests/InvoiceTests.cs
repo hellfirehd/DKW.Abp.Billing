@@ -76,7 +76,7 @@ public partial class InvoiceTests
     public void Invoice_SetTaxRates_ShouldApplyTaxesToTaxableItems()
     {
         // Arrange
-        var taxProvider = new FakeTaxProvider();
+        var taxProvider = new CanadianTaxProvider();
         var invoice = new Invoice { Province = Provinces.NS };
         var taxableProduct = new Product
         {

@@ -12,7 +12,7 @@ public class InvoiceApplicationService : IInvoiceApplicationService
     private readonly Dictionary<Guid, Discount> _discounts = [];
     private readonly Dictionary<Guid, Surcharge> _surcharges = [];
 
-    private readonly ITaxProvider _taxProvider = new FakeTaxProvider();
+    private readonly ITaxProvider _taxProvider = new CanadianTaxProvider();
 
     /// <summary>
     /// Creates a new invoice
