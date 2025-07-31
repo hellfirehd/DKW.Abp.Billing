@@ -5,16 +5,29 @@ namespace Billing;
 /// </summary>
 /// <param name="code"></param>
 /// <param name="name"></param>
-/// <param name="taxType"></param>
 /// <param name="scope"></param>
 /// <param name="rates"></param>
-public class Tax(String code, String name, TaxType taxType, TaxScope scope, IReadOnlyCollection<TaxRate> rates)
+public class Tax(String code, String name, TaxScope scope, IReadOnlyCollection<TaxRate> rates)
 {
     public string Code { get; set; } = code;
     public string Name { get; set; } = name;
-    public TaxType TaxType { get; set; } = taxType;
     public TaxScope Scope { get; set; } = scope;
     public IReadOnlyCollection<TaxRate> Rates { get; set; } = rates;
+
+    /// <summary>
+    /// Indicates if this is a harmonized sales tax (combines GST and PST)
+    /// </summary>
+    public bool IsHarmonized => Code.Contains("HST");
+
+    /// <summary>
+    /// Indicates if this is a federal tax (GST)
+    /// </summary>
+    public bool IsFederal => Scope == TaxScope.Federal;
+
+    /// <summary>
+    /// Indicates if this is a provincial tax (PST, QST, RST)
+    /// </summary>
+    public bool IsProvincial => Scope == TaxScope.Provincial;
 
     public TaxRate? TaxRate(DateOnly date)
         => Rates.OrderByDescending(r => r.EffectiveDate)
@@ -50,7 +63,7 @@ public class TaxAmount
 
 public class TaxContainer
 {
-    public Tax GST { get; set; } = new Tax("GST", "Goods and Services Tax", TaxType.Goods, TaxScope.Federal, []);
+    public Tax GST { get; set; } = new Tax("GST", "Goods and Services Tax", TaxScope.Federal, []);
 
     public TaxRate BC_PST { get; set; } = new TaxRate(new DateOnly(2013, 4, 1), null, 0.07M);
 

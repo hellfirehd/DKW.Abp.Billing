@@ -1,13 +1,11 @@
-﻿using Shouldly;
-
-namespace Billing.Domain.Tests;
+﻿namespace Billing.Domain.Tests;
 
 /// <summary>
 /// Unit tests for the Invoice domain entity
 /// </summary>
 public partial class InvoiceTests
 {
-    private readonly BillingTestDataBuilder _testDataBuilder = new();
+    private readonly TestData _testDataBuilder = new();
 
     [Fact]
     public void CreateInvoice_ShouldInitializeWithDefaultValues()
@@ -16,7 +14,6 @@ public partial class InvoiceTests
         var invoice = new Invoice();
 
         // Assert
-        Assert.NotNull(invoice.Id);
         invoice.Id.ShouldNotBe(Guid.Empty);
         Assert.Equal(InvoiceStatus.Draft, invoice.Status);
         Assert.Empty(invoice.Items);
@@ -407,7 +404,7 @@ public partial class InvoiceTests
 
         var taxRates = new List<ItemTaxRate>
         {
-            new("GST" , TaxType.Combined, new TaxRate(new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1), 0.0875m))
+            new("GST" , TaxCategory.DigitalProduct, new TaxRate(new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1), 0.0875m))
         };
 
         // Act
@@ -417,17 +414,19 @@ public partial class InvoiceTests
         Assert.Equal(8.75m, invoice.GetTotalTax());
     }
 
-    [Fact]
-    public void LargeInvoice_ShouldCalculateEfficiently()
-    {
-        // Test with 100+ line items
-    }
+    //[Fact]
+    //public void LargeInvoice_ShouldCalculateEfficiently()
+    //{
+    //    // Test with 100+ line items
+    //    throw new NotImplementedException();
+    //}
 
-    [Theory]
-    [InlineData(-1, "Amount cannot be negative")]
-    [InlineData(0, "Amount must be greater than zero")]
-    public void Payment_ShouldValidateAmount(decimal amount, string expectedError)
-    {
-        // Input validation tests
-    }
+    //[Theory]
+    //[InlineData(-1, "Amount cannot be negative")]
+    //[InlineData(0, "Amount must be greater than zero")]
+    //public void Payment_ShouldValidateAmount(decimal amount, string expectedError)
+    //{
+    //    // Input validation tests
+    //    throw new NotImplementedException();
+    //}
 }

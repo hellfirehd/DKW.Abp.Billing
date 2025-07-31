@@ -1,0 +1,60 @@
+<Project>
+    <PropertyGroup>
+        
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+
+        <IsTestProject Condition="$(MSBuildProjectName.EndsWith('Tests')) or $(MSBuildProjectName.EndsWith('.TestBase'))">true</IsTestProject>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
+        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+        <IsPackable>false</IsPackable>
+        <IsPublishable>False</IsPublishable>
+        <LangVersion>latest</LangVersion>
+        <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+        <PackageReference Include="Bogus" Version="35.6.3" />
+        <PackageReference Include="Bogus.Hollywood" Version="35.6.3" />
+        <PackageReference Include="Bogus.Locations" Version="35.6.3" />
+        <PackageReference Include="Bogus.Text" Version="35.6.3" />
+
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
+        <PackageReference Include="Shouldly" Version="4.3.0" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.extensibility.execution" Version="2.9.3" />
+
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+
+        <PackageReference Include="Bogus.Tools.Analyzer" Version="35.6.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+
+        <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.17">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+            <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+        <Using Include="Shouldly;" />
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+</Project>

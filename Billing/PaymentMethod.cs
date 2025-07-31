@@ -3,7 +3,7 @@
 public abstract class PaymentMethod : IPaymentMethod
 {
     public abstract PaymentType PaymentType { get; }
-    public string Details { get; set; } // e.g., card number, bank account number, etc.
+    public string Details { get; set; } = String.Empty; // e.g., card number, bank account number, etc.
 
     public static readonly IPaymentMethod BankTransfer = new BankTransferPaymentMethod();
     public static readonly IPaymentMethod CreditCard = new CreditCardPaymentMethod();

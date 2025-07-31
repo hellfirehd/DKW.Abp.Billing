@@ -7,7 +7,7 @@ public class Payment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public decimal Amount { get; set; }
-    public IPaymentMethod Method { get; set; }
+    public IPaymentMethod Method { get; set; } = default!;
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public DateOnly PaymentDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public string ReferenceNumber { get; set; } = string.Empty;

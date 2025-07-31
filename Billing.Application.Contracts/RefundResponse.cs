@@ -1,4 +1,4 @@
-﻿namespace Billing.Refunds;
+﻿namespace Billing;
 
 public class RefundResponse
 {

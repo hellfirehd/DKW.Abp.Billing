@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Bogus;
 using Volo.Abp.DependencyInjection;
 
 namespace Billing;
@@ -7,7 +6,7 @@ namespace Billing;
 /// <summary>
 /// Builder class for creating test data for billing system tests
 /// </summary>
-public class BillingTestDataBuilder : ITransientDependency
+public class TestData : ITransientDependency
 {
     /// <summary>
     /// Creates a complete test scenario with invoice, items, taxes, and payments
@@ -17,8 +16,8 @@ public class BillingTestDataBuilder : ITransientDependency
         // Create tax rates for Nova Scotia
         var taxRates = new List<ItemTaxRate>
         {
-            new("BC-PST", TaxType.Combined, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue, 0.0875m)),
-            new("GST", TaxType.Goods, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue,0.0875m))
+            new("BC-PST", TaxCategory.TaxableService, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue, 0.0875m)),
+            new("GST", TaxCategory.TaxableProduct, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue,0.0875m))
         };
 
         // Create discounts
@@ -45,10 +44,7 @@ public class BillingTestDataBuilder : ITransientDependency
         var invoice = new Invoice
         {
             InvoiceNumber = "INV-2024-001",
-            CustomerName = "Acme Corporation",
-            CustomerEmail = "billing@acme.com",
-            BillingAddress = "123 Business Ave, Los Angeles, CA 90210",
-            ShippingAddress = "456 Warehouse St, Long Beach, CA 90802",
+            Customer = Customer(),
             Province = Provinces.NS,
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             ShippingCost = 25.00m,
@@ -108,8 +104,7 @@ public class BillingTestDataBuilder : ITransientDependency
         var invoice = new Invoice
         {
             InvoiceNumber = "INV-SIMPLE-001",
-            CustomerName = "John Doe",
-            CustomerEmail = "john@example.com",
+            Customer = Customer(Provinces.BC),
             Province = Provinces.BC,
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15))
         };
@@ -127,6 +122,31 @@ public class BillingTestDataBuilder : ITransientDependency
 
         return invoice;
     }
+
+    public static Customer Customer(Province? province = null) => new Faker<Customer>()
+        .RuleFor(c => c.Id, f => f.Random.Guid())
+        .RuleFor(c => c.Name, f => f.Person.FullName)
+        .RuleFor(c => c.Addresses, f => [Address(isDefault: false, isBilling: true), Address(isDefault: false, isShipping: true)])
+        .RuleFor(c => c.PhoneNumbers, _ => [])
+        .RuleFor(c => c.EmailAddresses, f => [new EmailAddress(f.Person.Email, f.Person.FullName)])
+        .RuleFor(c => c.PaymentMethods, f => [])
+        .RuleFor(c => c.TaxProfile, f => default);
+
+    public static Address Address(Province? province = null, Boolean isDefault = false, Boolean? isBilling = null, Boolean? isShipping = null) => new Faker<Address>()
+        .RuleFor(a => a.Id, f => f.Random.Guid())
+        .RuleFor(a => a.Line1, f => f.Address.StreetAddress())
+        .RuleFor(a => a.Line2, f => f.Lorem.Word())
+        .RuleFor(a => a.City, f => f.Address.City())
+        .RuleFor(a => a.Province, f => province is null ? f.PickRandom(Provinces.All) : province)
+        .RuleFor(a => a.PostalCode, f => f.Address.ZipCode())
+        .RuleFor(a => a.Country, f => "Canada")
+        .RuleFor(a => a.IsDefault, f => isDefault)
+        .RuleFor(a => a.IsShippingAddress, f => isDefault ? true : isShipping.HasValue ? isShipping : f.Random.Bool())
+        .RuleFor(a => a.IsBillingAddress, f => isDefault ? true : isBilling.HasValue ? isBilling : f.Random.Bool());
+
+    public static PhoneNumber PhoneNumber() => new Faker<PhoneNumber>()
+        .RuleFor(p => p.CountryCode, 1)
+        .RuleFor(p => p.Number, f => f.Random.Int(111111111, 99999999));
 
     /// <summary>
     /// Creates payment and refund test scenarios

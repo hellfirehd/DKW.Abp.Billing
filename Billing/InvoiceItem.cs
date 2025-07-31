@@ -3,17 +3,12 @@ namespace Billing;
 /// <summary>
 /// Base class for all invoice items (products and services)
 /// </summary>
-public abstract class InvoiceItem
+public abstract class InvoiceItem : Item
 {
-    public Guid Id { get; protected set; } = Guid.NewGuid();
-    public string Description { get; set; } = string.Empty;
-    public decimal UnitPrice { get; set; }
     public int Quantity { get; set; } = 1;
-    public TaxType TaxType { get; set; } = TaxType.Combined;
-    public TaxCategory TaxCategory { get; set; } = TaxCategory.DigitalProduct;
     public List<TaxAmount> AppliedTaxes { get; private set; } = [];
     public List<Discount> AppliedDiscounts { get; private set; } = [];
-    public Int32 SortOrder { get; set; }
+    public int SortOrder { get; set; }
 
     /// <summary>
     /// Gets the subtotal before taxes and discounts
@@ -46,7 +41,7 @@ public abstract class InvoiceItem
 
         foreach (var tax in taxes)
         {
-            if (tax.TaxType == TaxType)
+            if (tax.TaxCategory == TaxCategory)
             {
                 var taxAmount = new TaxAmount
                 {

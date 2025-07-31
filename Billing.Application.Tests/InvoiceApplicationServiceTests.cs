@@ -1,7 +1,4 @@
-﻿using Billing.Invoices;
-using Billing.Payments;
-using Billing.Refunds;
-using Shouldly;
+﻿using Shouldly;
 
 namespace Billing.Application.Tests;
 
@@ -11,12 +8,12 @@ namespace Billing.Application.Tests;
 public class InvoiceApplicationServiceTests
 {
     private readonly InvoiceApplicationService _invoiceService;
-    private readonly BillingTestDataBuilder _testDataBuilder;
+    private readonly TestData _testDataBuilder;
 
     public InvoiceApplicationServiceTests()
     {
         _invoiceService = new InvoiceApplicationService();
-        _testDataBuilder = new BillingTestDataBuilder();
+        _testDataBuilder = new TestData();
     }
 
     [Fact]

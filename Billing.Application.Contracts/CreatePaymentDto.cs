@@ -1,4 +1,4 @@
-namespace Billing.Payments;
+namespace Billing;
 
 /// <summary>
 /// DTO for payment information
@@ -7,7 +7,7 @@ public class CreatePaymentDto
 {
     public Guid InvoiceId { get; set; }
     public decimal Amount { get; set; }
-    public IPaymentMethod Method { get; set; }
+    public IPaymentMethod Method { get; set; } = default!;
     public string ReferenceNumber { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 }

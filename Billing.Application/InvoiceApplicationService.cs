@@ -1,7 +1,4 @@
-﻿using Billing.Payments;
-using Billing.Refunds;
-
-namespace Billing.Invoices;
+﻿namespace Billing;
 
 /// <summary>
 /// Application service for invoice operations
@@ -24,9 +21,6 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             InvoiceNumber = request.InvoiceNumber,
             DueDate = request.DueDate,
             CustomerName = request.CustomerName,
-            CustomerEmail = request.CustomerEmail,
-            BillingAddress = request.BillingAddress,
-            ShippingAddress = request.ShippingAddress,
             Province = request.State,
             ShippingCost = request.ShippingCost,
             ShippingMethod = request.ShippingMethod
@@ -239,9 +233,6 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             DueDate = invoice.DueDate,
             Status = invoice.Status,
             CustomerName = invoice.CustomerName,
-            CustomerEmail = invoice.CustomerEmail,
-            BillingAddress = invoice.BillingAddress,
-            ShippingAddress = invoice.ShippingAddress,
             State = invoice.Province,
             Subtotal = invoice.GetSubtotal(),
             TotalTax = invoice.GetTotalTax(),

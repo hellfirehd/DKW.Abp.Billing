@@ -12,41 +12,41 @@ public class CanadianTaxProvider : ITaxProvider
 
     public CanadianTaxProvider()
     {
-        var gst = new Tax("GST", "GST", TaxType.Goods, TaxScope.Federal,
+        var gst = new Tax("GST", "GST", TaxScope.Federal,
         [
             new TaxRate(new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1), 0.07M),
             new TaxRate(new DateOnly(2006, 7, 1), new DateOnly(2008, 1, 1), 0.06M),
             new TaxRate(new DateOnly(2008, 1, 1), DateOnly.MaxValue, 0.05M)
         ]);
 
-        var bcpst = new Tax("BC-PST", "PST", TaxType.Services, TaxScope.Provincial,
+        var bcpst = new Tax("BC-PST", "PST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2013, 4, 1), DateOnly.MaxValue, 0.07M)]);
 
-        var mbrst = new Tax("MB-PST", "RST", TaxType.Services, TaxScope.Provincial,
+        var mbrst = new Tax("MB-PST", "RST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2019, 7, 1), DateOnly.MaxValue, 0.07M)]);
 
-        var nbhst = new Tax("NB-HST", "HST", TaxType.Combined, TaxScope.Provincial,
+        var nbhst = new Tax("NB-HST", "HST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2016, 7, 1), DateOnly.MaxValue, 0.15M)]);
 
-        var nlhst = new Tax("NL-HST", "HST", TaxType.Combined, TaxScope.Provincial,
+        var nlhst = new Tax("NL-HST", "HST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2016, 7, 1), DateOnly.MaxValue, 0.15M)]);
 
-        var nshst = new Tax("NS-HST", "HST", TaxType.Combined, TaxScope.Provincial,
+        var nshst = new Tax("NS-HST", "HST", TaxScope.Provincial,
         [
             new TaxRate(new DateOnly(2010, 7, 1), new DateOnly(2025, 4, 1), 0.15M),
             new TaxRate(new DateOnly(2025, 4, 1), DateOnly.MaxValue, 0.14M)
         ]);
 
-        var onhst = new Tax("ON-HST", "HST", TaxType.Combined, TaxScope.Provincial,
+        var onhst = new Tax("ON-HST", "HST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue, 0.13M)]);
 
-        var pehst = new Tax("PE-HST", "HST", TaxType.Combined, TaxScope.Provincial,
+        var pehst = new Tax("PE-HST", "HST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2016, 10, 1), DateOnly.MaxValue, 0.15M)]);
 
-        var qcqst = new Tax("QC-QST", "QST", TaxType.Services, TaxScope.Provincial,
+        var qcqst = new Tax("QC-QST", "QST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2013, 1, 1), DateOnly.MaxValue, 0.09975M)]);
 
-        var skpst = new Tax("SK-PST", "PST", TaxType.Services, TaxScope.Provincial,
+        var skpst = new Tax("SK-PST", "PST", TaxScope.Provincial,
             [new TaxRate(new DateOnly(2017, 3, 23), DateOnly.MaxValue, 0.06M)]);
 
         _taxMap = [
@@ -82,7 +82,7 @@ public class CanadianTaxProvider : ITaxProvider
             var rate = map.Tax.TaxRate(effectiveDate);
             if (rate is not null)
             {
-                rates.Add(new ItemTaxRate(map.Tax.Code, map.Tax.TaxType, rate));
+                rates.Add(new ItemTaxRate(map.Tax.Code, TaxCategory.TaxableProduct, rate));
             }
         }
 
@@ -99,18 +99,36 @@ public class CanadianTaxProvider : ITaxProvider
         return taxCategory switch
         {
             TaxCategory.NonTaxableProduct or TaxCategory.NonTaxableService => [],
-            TaxCategory.TaxableProduct => allRates.Where(r => r.TaxType == TaxType.Goods || r.TaxType == TaxType.Combined).ToArray(),
-            TaxCategory.TaxableService => allRates.Where(r => r.TaxType == TaxType.Services || r.TaxType == TaxType.Combined).ToArray(),
-            TaxCategory.DigitalProduct => allRates.Where(r => r.TaxType == TaxType.Goods || r.TaxType == TaxType.Combined).ToArray(),
-            TaxCategory.Shipping => allRates.Where(r => r.TaxType == TaxType.Services || r.TaxType == TaxType.Combined).ToArray(),
+            TaxCategory.TaxableProduct => allRates.Where(r => IsApplicableToGoods(r.Code)).ToArray(),
+            TaxCategory.TaxableService => allRates.Where(r => IsApplicableToServices(r.Code)).ToArray(),
+            TaxCategory.DigitalProduct => allRates.Where(r => IsApplicableToGoods(r.Code)).ToArray(),
+            TaxCategory.Shipping => allRates.Where(r => IsApplicableToServices(r.Code)).ToArray(),
             _ => allRates
         };
     }
 
     /// <summary>
+    /// Determines if a tax applies to goods based on tax code
+    /// </summary>
+    private static bool IsApplicableToGoods(string taxCode)
+    {
+        // GST applies to all goods, HST replaces both GST and PST
+        return taxCode == "GST" || taxCode.Contains("HST");
+    }
+
+    /// <summary>
+    /// Determines if a tax applies to services based on tax code
+    /// </summary>
+    private static bool IsApplicableToServices(string taxCode)
+    {
+        // All taxes apply to services in Canada
+        return true;
+    }
+
+    /// <summary>
     /// Validates if a province has tax configuration
     /// </summary>
-    public bool HasTaxConfiguration(Province province)
+    public Boolean HasTaxConfiguration(Province province)
     {
         return _taxMap.Any(m => m.Province == province);
     }

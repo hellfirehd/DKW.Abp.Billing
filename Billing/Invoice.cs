@@ -12,10 +12,8 @@ public class Invoice
     public InvoiceStatus Status { get; private set; } = InvoiceStatus.Draft;
 
     // Customer Information
+    public Customer Customer { get; set; } = new Customer();
     public string CustomerName { get; set; } = string.Empty;
-    public string CustomerEmail { get; set; } = string.Empty;
-    public string BillingAddress { get; set; } = string.Empty;
-    public string ShippingAddress { get; set; } = string.Empty;
     public Province Province { get; set; } // For tax calculations
 
     // Line Items

@@ -1,5 +1,3 @@
-using Billing;
-
 namespace Billing.Domain.Tests;
 
 /// <summary>
@@ -21,7 +19,6 @@ public class CanadianTaxProviderTests
         // Assert
         Assert.Single(rates);
         Assert.Equal("NS-HST", rates[0].Code);
-        Assert.Equal(TaxType.Combined, rates[0].TaxType);
         Assert.Equal(0.15m, rates[0].TaxRate.Rate); // 15% HST
     }
 
@@ -36,10 +33,10 @@ public class CanadianTaxProviderTests
 
         // Assert
         Assert.Equal(2, rates.Length); // GST + PST
-        
+
         var gst = rates.First(r => r.Code == "GST");
         var pst = rates.First(r => r.Code == "BC-PST");
-        
+
         Assert.Equal(0.05m, gst.TaxRate.Rate); // 5% GST
         Assert.Equal(0.07m, pst.TaxRate.Rate); // 7% PST
     }
@@ -55,34 +52,6 @@ public class CanadianTaxProviderTests
 
         // Assert
         Assert.Empty(rates);
-    }
-
-    [Fact]
-    public void GetTaxRatesForCategory_ShouldReturnCorrectRates_ForTaxableProducts()
-    {
-        // Arrange
-        var effectiveDate = new DateOnly(2023, 6, 1);
-
-        // Act
-        var rates = _taxProvider.GetTaxRatesForCategory(Provinces.BC, effectiveDate, TaxCategory.TaxableProduct);
-
-        // Assert
-        Assert.Equal(2, rates.Length); // GST + PST for products
-        Assert.All(rates, r => Assert.True(r.TaxType == TaxType.Goods || r.TaxType == TaxType.Combined));
-    }
-
-    [Fact]
-    public void GetTaxRatesForCategory_ShouldReturnCorrectRates_ForTaxableServices()
-    {
-        // Arrange
-        var effectiveDate = new DateOnly(2023, 6, 1);
-
-        // Act
-        var rates = _taxProvider.GetTaxRatesForCategory(Provinces.BC, effectiveDate, TaxCategory.TaxableService);
-
-        // Assert
-        Assert.Equal(2, rates.Length); // GST + PST for services
-        Assert.All(rates, r => Assert.True(r.TaxType == TaxType.Services || r.TaxType == TaxType.Combined));
     }
 
     [Fact]
@@ -136,6 +105,27 @@ public class CanadianTaxProviderTests
     }
 
     [Theory]
+    [InlineData("AB", 1)] // Alberta - GST only
+    [InlineData("BC", 2)] // BC - GST + PST  
+    [InlineData("ON", 1)] // Ontario - HST only
+    [InlineData("QC", 2)] // Quebec - GST + QST
+    [InlineData("NT", 1)] // Northwest Territories - GST only
+    [InlineData("NU", 1)] // Nunavut - GST only
+    [InlineData("YT", 1)] // Yukon - GST only
+    public void GetTaxRates_ShouldReturnCorrectNumberOfTaxes_ByProvince(string provinceCode, int expectedCount)
+    {
+        // Arrange
+        var province = Provinces.All.First(p => p.Code == provinceCode);
+        var effectiveDate = new DateOnly(2023, 6, 1);
+
+        // Act
+        var rates = _taxProvider.GetTaxRates(province, effectiveDate);
+
+        // Assert
+        Assert.Equal(expectedCount, rates.Length);
+    }
+
+    [Theory]
     [InlineData("AB")] // Alberta - GST only
     [InlineData("NT")] // Northwest Territories - GST only  
     [InlineData("NU")] // Nunavut - GST only
@@ -154,6 +144,183 @@ public class CanadianTaxProviderTests
         Assert.Equal("GST", rates[0].Code);
         Assert.Equal(0.05m, rates[0].TaxRate.Rate);
     }
+
+    [Fact]
+    public void CanadianTaxProvider_ShouldCalculateCorrectTotalTax_ForMixedItems()
+    {
+        // Arrange
+        var invoice = new Invoice { Province = Provinces.BC }; // BC: 5% GST + 7% PST = 12%
+
+        var taxableProduct = new Product
+        {
+            Description = "Standard Product",
+            UnitPrice = 100.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.TaxableProduct
+        };
+
+        var nonTaxableProduct = new Product
+        {
+            Description = "Non-Taxable Product",
+            UnitPrice = 50.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.NonTaxableProduct
+        };
+
+        invoice.AddItem(taxableProduct);
+        invoice.AddItem(nonTaxableProduct);
+
+        // Act
+        var allTaxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        invoice.SetTaxRates(allTaxRates);
+
+        // Assert
+        // Only the taxable product should have tax: $100 * 12% = $12
+        Assert.Equal(12.00m, invoice.GetTotalTax());
+        Assert.Equal(2, taxableProduct.AppliedTaxes.Count); // GST + PST
+        Assert.Empty(nonTaxableProduct.AppliedTaxes); // No taxes
+        Assert.Equal(162.00m, invoice.GetTotal()); // $150 subtotal + $12 tax
+    }
+
+    [Fact]
+    public void CanadianTaxProvider_ShouldHandleComplexCalculations()
+    {
+        // Create a comprehensive test invoice
+        var invoice = new Invoice
+        {
+            Province = Provinces.ON, // 13% HST
+            ShippingCost = 15.00m
+        };
+
+        // Add multiple items with different tax treatments
+        var software = new Product
+        {
+            Description = "Software License",
+            UnitPrice = 200.00m,
+            Quantity = 2,
+            TaxCategory = TaxCategory.DigitalProduct
+        };
+
+        var consulting = new Service
+        {
+            Description = "Professional Consulting",
+            HourlyRate = 150.00m,
+            Hours = 4.0m,
+            TaxCategory = TaxCategory.TaxableService
+        };
+
+        invoice.AddItem(software);
+        invoice.AddItem(consulting);
+
+        // Apply volume discount
+        var discount = new Discount
+        {
+            Name = "Volume Discount",
+            Type = DiscountType.Percentage,
+            Scope = DiscountScope.PerOrder,
+            Value = 10.0m, // 10%
+            IsActive = true
+        };
+        invoice.AddOrderDiscount(discount);
+
+        // Apply credit card surcharge
+        var surcharge = new Surcharge
+        {
+            Name = "Credit Card Processing",
+            FixedAmount = 2.50m,
+            PercentageRate = 0.029m, // 2.9%
+            IsActive = true
+        };
+        invoice.AddSurcharge(surcharge);
+
+        // Apply taxes
+        var taxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        invoice.SetTaxRates(taxRates);
+
+        // Verify calculation chain
+        var subtotal = invoice.GetSubtotal(); // (200*2) + (150*4) = 1000
+        var totalAfterDiscounts = invoice.GetTotalAfterDiscounts(); // 1000 - 100 + 15 = 915
+        var totalTax = invoice.GetTotalTax(); // 915 * 0.13 = 119.95
+        var totalSurcharges = invoice.GetTotalSurcharges(); // Based on 915 + 119.95
+        var finalTotal = invoice.GetTotal();
+
+        Assert.Equal(1000.00m, subtotal);
+        Assert.Equal(915.00m, totalAfterDiscounts);
+        Assert.Equal(119.95m, totalTax);
+        Assert.True(totalSurcharges > 0);
+        Assert.True(finalTotal > 1000.00m);
+    }
+
+    [Fact]
+    public void TaxCodeSystem_ConceptDemo_ShouldClassifyBasicGroceries_AsZeroRated()
+    {
+        // This test demonstrates the concept for future tax code implementation
+        // Basic groceries should be zero-rated (0% but still tracked)
+
+        // For now, we simulate this with existing structure
+        var groceries = new Product
+        {
+            Description = "Basic Groceries (Milk, Bread, Eggs)",
+            UnitPrice = 25.00m,
+            TaxCategory = TaxCategory.NonTaxableProduct // Simulating zero-rated
+        };
+
+        var invoice = new Invoice { Province = Provinces.BC };
+        invoice.AddItem(groceries);
+
+        var taxRates = _taxProvider.GetTaxRatesForCategory(
+            invoice.Province,
+            invoice.InvoiceDate,
+            groceries.TaxCategory);
+
+        groceries.ApplyTaxes(taxRates);
+
+        // Should have no tax (simulating zero-rated for now)
+        Assert.Equal(0m, groceries.GetTotalTax());
+        Assert.Equal(25.00m, groceries.GetTotal());
+
+        // Future enhancement: This would track as zero-rated rather than non-taxable
+        // to support proper GST/HST compliance reporting
+    }
+
+    [Fact]
+    public void TaxCodeSystem_ConceptDemo_ShouldHandleCustomerExemptions()
+    {
+        // This test demonstrates customer-level exemptions concept
+
+        var standardProduct = new Product
+        {
+            Description = "Office Supplies",
+            UnitPrice = 100.00m,
+            TaxCategory = TaxCategory.TaxableProduct
+        };
+
+        var invoice = new Invoice { Province = Provinces.BC };
+        invoice.AddItem(standardProduct);
+
+        // Test 1: Regular customer gets full tax
+        var regularTaxRates = _taxProvider.GetTaxRatesForCategory(
+            invoice.Province,
+            invoice.InvoiceDate,
+            standardProduct.TaxCategory);
+
+        standardProduct.ApplyTaxes(regularTaxRates);
+        var regularTax = standardProduct.GetTotalTax();
+
+        // Reset for exempt customer test
+        standardProduct.AppliedTaxes.Clear();
+
+        // Test 2: Exempt customer gets no tax (simulated by applying no rates)
+        var exemptTaxRates = Array.Empty<ItemTaxRate>(); // Simulating exemption
+        standardProduct.ApplyTaxes(exemptTaxRates);
+        var exemptTax = standardProduct.GetTotalTax();
+
+        Assert.True(regularTax > 0);
+        Assert.Equal(0m, exemptTax);
+
+        // Future enhancement: This would be based on CustomerTaxProfile
+        // with proper exemption certificate validation
+    }
 }
 
 // Add these new test methods to the existing InvoiceTests.cs file
@@ -165,7 +332,7 @@ public partial class InvoiceTests
         // Arrange
         var taxProvider = new CanadianTaxProvider();
         var invoice = new Invoice { Province = Provinces.BC };
-        
+
         var taxableProduct = new Product
         {
             Description = "Taxable Product",
@@ -173,7 +340,7 @@ public partial class InvoiceTests
             Quantity = 1,
             TaxCategory = TaxCategory.TaxableProduct
         };
-        
+
         var taxableService = new Service
         {
             Description = "Taxable Service",
@@ -181,7 +348,7 @@ public partial class InvoiceTests
             Hours = 1.0m,
             TaxCategory = TaxCategory.TaxableService
         };
-        
+
         var nonTaxableProduct = new Product
         {
             Description = "Non-Taxable Product",
@@ -210,12 +377,12 @@ public partial class InvoiceTests
     {
         // Arrange
         var taxProvider = new CanadianTaxProvider();
-        var invoice = new Invoice 
-        { 
+        var invoice = new Invoice
+        {
             Province = Provinces.ON, // 13% HST
             ShippingCost = 10.00m
         };
-        
+
         var product = new Product
         {
             Description = "Software License",
@@ -241,9 +408,9 @@ public partial class InvoiceTests
             Value = 10.0m, // 10% off
             IsActive = true
         };
-        
+
         product.ApplyDiscounts([itemDiscount]);
-        
+
         invoice.AddItem(product);
         invoice.AddItem(service);
 

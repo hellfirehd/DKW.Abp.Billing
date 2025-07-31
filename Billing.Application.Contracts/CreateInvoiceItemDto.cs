@@ -1,4 +1,4 @@
-namespace Billing.Invoices;
+namespace Billing;
 
 /// <summary>
 /// DTO for creating invoice items

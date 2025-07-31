@@ -1,7 +1,4 @@
-﻿using Billing.Payments;
-using Billing.Refunds;
-
-namespace Billing.Invoices;
+﻿namespace Billing;
 
 public class InvoiceResponse
 {

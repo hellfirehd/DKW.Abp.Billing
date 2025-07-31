@@ -3,8 +3,10 @@
 namespace Billing;
 
 /// <summary>
-/// Represents product or service categories for tax purposes
+/// Legacy tax category enumeration - maintained for backward compatibility
+/// Use TaxTreatment and ItemCategory for new implementations
 /// </summary>
+//[Obsolete("Use TaxTreatment and ItemCategory for new implementations. This enum is maintained for backward compatibility only.")]
 public enum TaxCategory
 {
     [Description("Taxable Product")]

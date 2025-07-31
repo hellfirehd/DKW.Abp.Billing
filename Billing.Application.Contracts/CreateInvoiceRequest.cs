@@ -1,4 +1,4 @@
-﻿namespace Billing.Invoices;
+﻿namespace Billing;
 
 // Request/Response DTOs
 public class CreateInvoiceRequest

@@ -27,8 +27,7 @@ public readonly struct Province : IEquatable<Province>, IComparable<Province>
 
     // IEquatable<Province> implementation
     public Boolean Equals(Province other)
-        => String.Equals(Code, other.Code, StringComparison.OrdinalIgnoreCase)
-        && String.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+        => String.Equals(Code, other.Code, StringComparison.OrdinalIgnoreCase);
 
     public override Boolean Equals(Object? obj) => obj is Province other && Equals(other);
 
@@ -37,9 +36,9 @@ public readonly struct Province : IEquatable<Province>, IComparable<Province>
     // IComparable<Province> implementation
     public Int32 CompareTo(Province other)
     {
-        // Compare by Code first, then by Name if Codes are equal
-        Int32 codeComparison = String.Compare(Code, other.Code, StringComparison.OrdinalIgnoreCase);
-        return codeComparison != 0 ? codeComparison : String.Compare(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+        // Compare by Name first, then by Code if Codes are equal
+        Int32 nameComparison = String.Compare(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+        return nameComparison != 0 ? nameComparison : String.Compare(Code, other.Name, StringComparison.OrdinalIgnoreCase);
     }
 
     // Equality operators

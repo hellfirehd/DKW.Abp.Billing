@@ -1,4 +1,4 @@
-﻿namespace Billing.Invoices;
+﻿namespace Billing;
 
 public class CreateInvoiceItemRequest
 {
