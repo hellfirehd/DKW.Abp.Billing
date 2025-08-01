@@ -5,7 +5,246 @@
 /// </summary>
 public partial class InvoiceTests
 {
+    private readonly CanadianTaxProvider _taxProvider = new();
+    private readonly ProvinceManager _pm = new();
     private readonly TestData _testDataBuilder = new();
+
+    [Fact]
+    public void SetTaxRates_ShouldApplyCorrectTaxes_ByCategory()
+    {
+        // Arrange
+        var taxProvider = new CanadianTaxProvider();
+        var invoice = new Invoice { Province = _pm.GetProvince("BC") };
+
+        var taxableProduct = new Product
+        {
+            Description = "Taxable Product",
+            UnitPrice = 100.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.TaxableProduct
+        };
+
+        var taxableService = new Service
+        {
+            Description = "Taxable Service",
+            HourlyRate = 100.00m,
+            Hours = 1.0m,
+            TaxCategory = TaxCategory.TaxableService
+        };
+
+        var nonTaxableProduct = new Product
+        {
+            Description = "Non-Taxable Product",
+            UnitPrice = 50.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.NonTaxableProduct
+        };
+
+        invoice.AddItem(taxableProduct);
+        invoice.AddItem(taxableService);
+        invoice.AddItem(nonTaxableProduct);
+
+        // Act
+        var allTaxRates = taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        invoice.SetTaxRates(allTaxRates);
+
+        // Assert
+        Assert.Equal(24.00m, invoice.GetTotalTax()); // (100 + 100) * 0.12 = 24.00 (5% GST + 7% PST)
+        Assert.Equal(2, taxableProduct.AppliedTaxes.Count); // GST + PST
+        Assert.Equal(2, taxableService.AppliedTaxes.Count); // GST + PST
+        Assert.Empty(nonTaxableProduct.AppliedTaxes); // No taxes
+    }
+
+    [Fact]
+    public void Invoice_ShouldHandleComplexCalculations()
+    {
+        // Create a comprehensive test invoice
+        var invoice = new Invoice
+        {
+            Province = _pm.GetProvince("ON"), // 13% HST
+            ShippingCost = 15.00m
+        };
+
+        // Add multiple items with different tax treatments
+        var software = new Product
+        {
+            Description = "Software License",
+            UnitPrice = 200.00m,
+            Quantity = 2,
+            TaxCategory = TaxCategory.DigitalProduct
+        };
+
+        var consulting = new Service
+        {
+            Description = "Professional Consulting",
+            HourlyRate = 150.00m,
+            Hours = 4.0m,
+            TaxCategory = TaxCategory.TaxableService
+        };
+
+        invoice.AddItem(software);
+        invoice.AddItem(consulting);
+
+        // Apply volume discount
+        var discount = new Discount
+        {
+            Name = "Volume Discount",
+            Type = DiscountType.Percentage,
+            Scope = DiscountScope.PerOrder,
+            Value = 10.0m, // 10%
+            IsActive = true
+        };
+        invoice.AddOrderDiscount(discount);
+
+        // Apply credit card surcharge
+        var surcharge = new Surcharge
+        {
+            Name = "Credit Card Processing",
+            FixedAmount = 2.50m,
+            PercentageRate = 0.029m, // 2.9%
+            IsActive = true
+        };
+        invoice.AddSurcharge(surcharge);
+
+        // Apply taxes
+        var taxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        invoice.SetTaxRates(taxRates);
+
+        // Verify calculation chain
+        var subtotal = invoice.GetSubtotal(); // (200*2) + (150*4) = 1000
+        var totalAfterDiscounts = invoice.GetTotalAfterDiscounts(); // 1000 - 100 + 15 = 915
+        var totalTax = invoice.GetTotalTax(); // 915 * 0.13 = 119.95
+        var totalSurcharges = invoice.GetTotalSurcharges(); // Based on 915 + 119.95
+        var finalTotal = invoice.GetTotal();
+
+        Assert.Equal(1000.00m, subtotal);
+        Assert.Equal(915.00m, totalAfterDiscounts);
+        Assert.Equal(119.95m, totalTax);
+        Assert.True(totalSurcharges > 0);
+        Assert.True(finalTotal > 1000.00m);
+    }
+
+    [Fact]
+    public void Invoice_ShouldCalculateCorrectTotalTax_ForMixedItems()
+    {
+        // Arrange
+        var invoice = new Invoice { Province = _pm.GetProvince("BC") }; // BC: 5% GST + 7% PST = 12%
+
+        var taxableProduct = new Product
+        {
+            Description = "Standard Product",
+            UnitPrice = 100.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.TaxableProduct
+        };
+
+        var nonTaxableProduct = new Product
+        {
+            Description = "Non-Taxable Product",
+            UnitPrice = 50.00m,
+            Quantity = 1,
+            TaxCategory = TaxCategory.NonTaxableProduct
+        };
+
+        invoice.AddItem(taxableProduct);
+        invoice.AddItem(nonTaxableProduct);
+        var allTaxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+
+        // Act
+        invoice.SetTaxRates(allTaxRates);
+
+        // Assert
+        // Only the taxable product should have tax: $100 * 12% = $12
+        Assert.Equal(12.00m, invoice.GetTotalTax());
+        Assert.Equal(2, taxableProduct.AppliedTaxes.Count); // GST + PST
+        Assert.Empty(nonTaxableProduct.AppliedTaxes); // No taxes
+        Assert.Equal(162.00m, invoice.GetTotal()); // $150 subtotal + $12 tax
+    }
+
+    [Fact]
+    public void TaxCalculation_ShouldBeAccurate_ForComplexScenario()
+    {
+        // Arrange
+        var taxProvider = new CanadianTaxProvider();
+        var invoice = new Invoice
+        {
+            Province = _pm.GetProvince("ON"), // 13% HST
+            ShippingCost = 10.00m
+        };
+
+        var product = new Product
+        {
+            Description = "Software License",
+            UnitPrice = 199.99m,
+            Quantity = 2,
+            TaxCategory = TaxCategory.TaxableProduct
+        };
+
+        var service = new Service
+        {
+            Description = "Support Service",
+            HourlyRate = 50.00m,
+            Hours = 3.0m,
+            TaxCategory = TaxCategory.TaxableService
+        };
+
+        // Add line item discount
+        var itemDiscount = new Discount
+        {
+            Name = "Volume Discount",
+            Type = DiscountType.Percentage,
+            Scope = DiscountScope.PerItem,
+            Value = 10.0m, // 10% off
+            IsActive = true
+        };
+
+        product.ApplyDiscounts([itemDiscount]);
+
+        invoice.AddItem(product);
+        invoice.AddItem(service);
+
+        // Add order discount
+        var orderDiscount = new Discount
+        {
+            Name = "Early Bird Discount",
+            Type = DiscountType.FixedAmount,
+            Scope = DiscountScope.PerOrder,
+            Value = 25.00m,
+            IsActive = true
+        };
+        invoice.AddOrderDiscount(orderDiscount);
+
+        // Add surcharge
+        var surcharge = new Surcharge
+        {
+            Name = "Payment Processing",
+            FixedAmount = 2.00m,
+            PercentageRate = 0.029m, // 2.9%
+            IsActive = true
+        };
+        invoice.AddSurcharge(surcharge);
+
+        // Apply taxes
+        var taxRates = taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        invoice.SetTaxRates(taxRates);
+
+        // Act & Assert
+        var subtotal = invoice.GetSubtotal(); // (199.99 * 2) + (50 * 3) = 549.98
+        var itemDiscounts = invoice.GetLineItemDiscounts(); // 199.99 * 2 * 0.10 = 40.00 (rounded)
+        var orderDiscounts = invoice.GetOrderDiscounts(); // 25.00
+        var totalAfterDiscounts = invoice.GetTotalAfterDiscounts(); // 549.98 - 40.00 - 25.00 + 10.00 = 494.98
+        var totalTax = invoice.GetTotalTax(); // Should be calculated on discounted amounts
+        var totalSurcharges = invoice.GetTotalSurcharges();
+        var finalTotal = invoice.GetTotal();
+
+        // Verify the calculation chain
+        Assert.Equal(549.98m, subtotal);
+        Assert.True(itemDiscounts > 0);
+        Assert.Equal(25.00m, orderDiscounts);
+        Assert.True(totalTax > 0);
+        Assert.True(totalSurcharges > 0);
+        Assert.True(finalTotal > totalAfterDiscounts);
+    }
 
     [Fact]
     public void CreateInvoice_ShouldInitializeWithDefaultValues()
@@ -74,7 +313,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var taxProvider = new CanadianTaxProvider();
-        var invoice = new Invoice { Province = Provinces.NS };
+        var invoice = new Invoice { Province = _pm.GetProvince("NS") };
         var taxableProduct = new Product
         {
             Description = "Taxable Product",
@@ -349,13 +588,14 @@ public partial class InvoiceTests
         };
         invoice.AddSurcharge(surcharge);
 
-        // Act & Assert
+        // Act
         var subtotal = invoice.GetSubtotal();
         var totalTax = invoice.GetTotalTax();
         var totalDiscounts = invoice.GetLineItemDiscounts() + invoice.GetOrderDiscounts();
         var totalSurcharges = invoice.GetTotalSurcharges();
         var finalTotal = invoice.GetTotal();
 
+        // Assert
         // Verify calculations are reasonable
         Assert.True(subtotal > 0);
         Assert.True(totalTax > 0);
@@ -392,7 +632,7 @@ public partial class InvoiceTests
     public void SetTaxRates_ShouldApplyTaxesToTaxableItems()
     {
         // Arrange
-        var invoice = new Invoice { Province = Provinces.BC };
+        var invoice = new Invoice { Province = _pm.GetProvince("BC") };
         var taxableProduct = new Product
         {
             Description = "Taxable Product",

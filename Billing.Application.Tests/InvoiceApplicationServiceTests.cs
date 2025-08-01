@@ -1,17 +1,17 @@
-﻿using Shouldly;
-
-namespace Billing.Application.Tests;
+﻿namespace Billing.Application.Tests;
 
 /// <summary>
 /// Unit tests for the Invoice Application Service
 /// </summary>
 public class InvoiceApplicationServiceTests
 {
+    private readonly ProvinceManager _pm;
     private readonly InvoiceApplicationService _invoiceService;
     private readonly TestData _testDataBuilder;
 
     public InvoiceApplicationServiceTests()
     {
+        _pm = new ProvinceManager();
         _invoiceService = new InvoiceApplicationService();
         _testDataBuilder = new TestData();
     }
@@ -25,7 +25,7 @@ public class InvoiceApplicationServiceTests
             InvoiceNumber = "INV-TEST-001",
             CustomerName = "Test Customer",
             CustomerEmail = "test@example.com",
-            State = Provinces.NS,
+            State = _pm.GetProvince("NS"),
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             Items =
             [
@@ -65,7 +65,7 @@ public class InvoiceApplicationServiceTests
         {
             InvoiceNumber = "INV-TAX-001",
             CustomerName = "Tax Test Customer",
-            State = Provinces.NS,
+            State = _pm.GetProvince("NS"),
             Items =
             [
                 new CreateInvoiceItemRequest
@@ -97,7 +97,7 @@ public class InvoiceApplicationServiceTests
         {
             InvoiceNumber = "INV-SERVICE-001",
             CustomerName = "Service Customer",
-            State = Provinces.NS,
+            State = _pm.GetProvince("NS"),
             Items =
             [
                 new CreateInvoiceItemRequest
@@ -242,7 +242,7 @@ public class InvoiceApplicationServiceTests
         var refundId = await _invoiceService.ProcessRefundAsync(refundRequest);
 
         // Assert
-        refundId.ShouldNotBe(Guid.Empty); ;
+        refundId.ShouldNotBe(Guid.Empty);
 
         var updatedInvoice = await _invoiceService.GetInvoiceAsync(invoiceId);
         Assert.NotNull(updatedInvoice);
@@ -337,7 +337,7 @@ public class InvoiceApplicationServiceTests
             InvoiceNumber = $"INV-TEST-{Guid.NewGuid().ToString()[..8].ToUpper()}",
             CustomerName = "Test Customer",
             CustomerEmail = "test@example.com",
-            State = Provinces.NS,
+            State = _pm.GetProvince("NS"),
             Items =
             [
                 new CreateInvoiceItemRequest

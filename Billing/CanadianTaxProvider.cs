@@ -6,6 +6,8 @@
 /// </summary>
 public class CanadianTaxProvider : ITaxProvider
 {
+    private readonly ProvinceManager manager = new();
+
     private sealed record ProvinceTax(Province Province, Tax Tax);
 
     private readonly ProvinceTax[] _taxMap;
@@ -50,23 +52,35 @@ public class CanadianTaxProvider : ITaxProvider
             [new TaxRate(new DateOnly(2017, 3, 23), DateOnly.MaxValue, 0.06M)]);
 
         _taxMap = [
-            new ProvinceTax(Provinces.AB, gst),
-            new ProvinceTax(Provinces.BC, gst),
-            new ProvinceTax(Provinces.BC, bcpst),
-            new ProvinceTax(Provinces.MB, gst),
-            new ProvinceTax(Provinces.MB, mbrst),
-            new ProvinceTax(Provinces.NB, nbhst),
-            new ProvinceTax(Provinces.NL, nlhst),
-            new ProvinceTax(Provinces.NS, nshst),
-            new ProvinceTax(Provinces.ON, onhst),
-            new ProvinceTax(Provinces.PE, pehst),
-            new ProvinceTax(Provinces.QC, gst),
-            new ProvinceTax(Provinces.QC, qcqst),
-            new ProvinceTax(Provinces.SK, gst),
-            new ProvinceTax(Provinces.SK, skpst),
-            new ProvinceTax(Provinces.NT, gst),
-            new ProvinceTax(Provinces.NU, gst),
-            new ProvinceTax(Provinces.YT, gst),
+            new ProvinceTax(manager.GetProvince("AB"), gst),
+
+            new ProvinceTax(manager.GetProvince("BC"), gst),
+            new ProvinceTax(manager.GetProvince("BC"), bcpst),
+
+            new ProvinceTax(manager.GetProvince("MB"), gst),
+            new ProvinceTax(manager.GetProvince("MB"), mbrst),
+
+            new ProvinceTax(manager.GetProvince("NB"), nbhst),
+
+            new ProvinceTax(manager.GetProvince("NL"), nlhst),
+
+            new ProvinceTax(manager.GetProvince("NS"), nshst),
+
+            new ProvinceTax(manager.GetProvince("ON"), onhst),
+
+            new ProvinceTax(manager.GetProvince("PE"), pehst),
+
+            new ProvinceTax(manager.GetProvince("QC"), gst),
+            new ProvinceTax(manager.GetProvince("QC"), qcqst),
+
+            new ProvinceTax(manager.GetProvince("SK"), gst),
+            new ProvinceTax(manager.GetProvince("SK"), skpst),
+
+            new ProvinceTax(manager.GetProvince("NT"), gst),
+
+            new ProvinceTax(manager.GetProvince("NU"), gst),
+
+            new ProvinceTax(manager.GetProvince("YT"), gst),
         ];
     }
 

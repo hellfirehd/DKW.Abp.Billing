@@ -1,11 +1,10 @@
-﻿namespace Billing;
+﻿namespace Billing.Customers;
 
 public class Customer
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public List<PhoneNumber> PhoneNumbers { get; set; } = [];
-    public List<EmailAddress> EmailAddresses { get; set; } = [];
+    public Email EmailAddresses { get; set; } = Email.Empty;
     public List<Address> Addresses { get; set; } = [];
     public List<PaymentMethod> PaymentMethods { get; set; } = [];
 

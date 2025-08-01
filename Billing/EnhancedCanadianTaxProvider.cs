@@ -1,3 +1,5 @@
+using Billing.EntityFrameworkCore;
+
 namespace Billing;
 
 /// <summary>
@@ -7,14 +9,15 @@ namespace Billing;
 public class EnhancedCanadianTaxProvider : ITaxProvider
 {
     private readonly CanadianTaxProvider _baseTaxProvider;
-    private readonly Dictionary<string, TaxCode> _taxCodes;
     private readonly Dictionary<Guid, ItemClassification> _itemClassifications;
+
+    private readonly TaxCodeRepository _taxCodes;
 
     public EnhancedCanadianTaxProvider()
     {
         _baseTaxProvider = new CanadianTaxProvider();
-        _taxCodes = InitializeTaxCodes();
-        _itemClassifications = new Dictionary<Guid, ItemClassification>();
+        _taxCodes = new();
+        _itemClassifications = [];
     }
 
     /// <summary>
@@ -36,7 +39,8 @@ public class EnhancedCanadianTaxProvider : ITaxProvider
         }
 
         // Get tax code
-        if (!_taxCodes.TryGetValue(classification.TaxCode, out var taxCode) || !taxCode.IsValidOn(effectiveDate))
+        var taxCode = _taxCodes.GetByCode(classification.TaxCode);
+        if (taxCode is null || !taxCode.IsValidOn(effectiveDate))
         {
             // Fallback to standard rates if tax code not found
             return GetTaxRates(province, effectiveDate);
@@ -73,15 +77,7 @@ public class EnhancedCanadianTaxProvider : ITaxProvider
     /// </summary>
     public IEnumerable<TaxCode> GetAvailableTaxCodes()
     {
-        return _taxCodes.Values.Where(tc => tc.IsActive);
-    }
-
-    /// <summary>
-    /// Gets tax code by code string
-    /// </summary>
-    public TaxCode? GetTaxCode(string code)
-    {
-        return _taxCodes.TryGetValue(code, out var taxCode) ? taxCode : null;
+        return _taxCodes.GetAll().Where(tc => tc.IsActive);
     }
 
     /// <summary>
@@ -149,119 +145,5 @@ public class EnhancedCanadianTaxProvider : ITaxProvider
     private ItemTaxRate[] GetStandardTaxRates(Province province, DateOnly effectiveDate, ItemCategory itemCategory)
     {
         return GetTaxRatesForItemCategory(province, effectiveDate, itemCategory);
-    }
-
-    private Dictionary<string, TaxCode> InitializeTaxCodes()
-    {
-        var taxCodes = new Dictionary<string, TaxCode>();
-
-        // Standard taxable goods
-        taxCodes["STD-GOODS"] = new TaxCode
-        {
-            Code = "STD-GOODS",
-            Description = "Standard Taxable Goods",
-            TaxTreatment = TaxTreatment.Standard,
-            ItemCategory = ItemCategory.GeneralGoods,
-            CraReference = "Schedule VI, Part I"
-        };
-
-        // Basic groceries (zero-rated)
-        taxCodes["ZR-GROCERY"] = new TaxCode
-        {
-            Code = "ZR-GROCERY",
-            Description = "Basic Groceries",
-            TaxTreatment = TaxTreatment.ZeroRated,
-            ItemCategory = ItemCategory.BasicGroceries,
-            CraReference = "Schedule VI, Part III",
-            Notes = "Meat, fish, poultry, dairy, eggs, vegetables, fruits, cereals, etc."
-        };
-
-        // Prescription drugs (zero-rated)
-        taxCodes["ZR-PRESCRIP"] = new TaxCode
-        {
-            Code = "ZR-PRESCRIP",
-            Description = "Prescription Drugs",
-            TaxTreatment = TaxTreatment.ZeroRated,
-            ItemCategory = ItemCategory.PrescriptionDrugs,
-            CraReference = "Schedule VI, Part II",
-            Notes = "Drugs dispensed by prescription"
-        };
-
-        // Medical devices (zero-rated)
-        taxCodes["ZR-MEDICAL"] = new TaxCode
-        {
-            Code = "ZR-MEDICAL",
-            Description = "Medical Devices",
-            TaxTreatment = TaxTreatment.ZeroRated,
-            ItemCategory = ItemCategory.MedicalDevices,
-            CraReference = "Schedule VI, Part II",
-            Notes = "Prescribed medical devices and equipment"
-        };
-
-        // Healthcare services (exempt)
-        taxCodes["EX-HEALTH"] = new TaxCode
-        {
-            Code = "EX-HEALTH",
-            Description = "Healthcare Services",
-            TaxTreatment = TaxTreatment.Exempt,
-            ItemCategory = ItemCategory.HealthcareServices,
-            CraReference = "Schedule V, Part II",
-            Notes = "Services rendered by healthcare professionals"
-        };
-
-        // Educational services (exempt)
-        taxCodes["EX-EDUCATION"] = new TaxCode
-        {
-            Code = "EX-EDUCATION",
-            Description = "Educational Services",
-            TaxTreatment = TaxTreatment.Exempt,
-            ItemCategory = ItemCategory.EducationalServices,
-            CraReference = "Schedule V, Part III",
-            Notes = "Degree, diploma, certificate courses"
-        };
-
-        // Financial services (exempt)
-        taxCodes["EX-FINANCIAL"] = new TaxCode
-        {
-            Code = "EX-FINANCIAL",
-            Description = "Financial Services",
-            TaxTreatment = TaxTreatment.Exempt,
-            ItemCategory = ItemCategory.FinancialServices,
-            CraReference = "Schedule V, Part VII",
-            Notes = "Banking, insurance, investment services"
-        };
-
-        // Professional services (standard)
-        taxCodes["STD-PROF"] = new TaxCode
-        {
-            Code = "STD-PROF",
-            Description = "Professional Services",
-            TaxTreatment = TaxTreatment.Standard,
-            ItemCategory = ItemCategory.ProfessionalServices,
-            Notes = "Consulting, accounting, legal services (non-exempt)"
-        };
-
-        // Digital services (standard)
-        taxCodes["STD-DIGITAL"] = new TaxCode
-        {
-            Code = "STD-DIGITAL",
-            Description = "Digital Services",
-            TaxTreatment = TaxTreatment.Standard,
-            ItemCategory = ItemCategory.DigitalServices,
-            Notes = "Software, digital content, online services"
-        };
-
-        // Exports (zero-rated)
-        taxCodes["ZR-EXPORT"] = new TaxCode
-        {
-            Code = "ZR-EXPORT",
-            Description = "Exports",
-            TaxTreatment = TaxTreatment.ZeroRated,
-            ItemCategory = ItemCategory.Exports,
-            CraReference = "Schedule VI, Part V",
-            Notes = "Goods and services exported from Canada"
-        };
-
-        return taxCodes;
     }
 }

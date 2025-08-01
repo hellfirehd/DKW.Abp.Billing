@@ -1,3 +1,5 @@
+using Billing.Customers;
+
 namespace Billing;
 
 /// <summary>
@@ -14,7 +16,7 @@ public class Invoice
     // Customer Information
     public Customer Customer { get; set; } = new Customer();
     public string CustomerName { get; set; } = string.Empty;
-    public Province Province { get; set; } // For tax calculations
+    public Province Province { get; set; } = Province.Empty; // For tax calculations
 
     // Line Items
     public List<InvoiceItem> Items { get; private set; } = [];
@@ -121,8 +123,8 @@ public class Invoice
     /// <summary>
     /// Gets the total after all discounts but before taxes and surcharges
     /// </summary>
-    public decimal GetTotalAfterDiscounts() =>
-        Math.Max(0, GetDiscountedSubtotal() - GetOrderDiscounts() + ShippingCost);
+    public decimal GetTotalAfterDiscounts()
+        => Math.Max(0, GetDiscountedSubtotal() - GetOrderDiscounts() + ShippingCost);
 
     /// <summary>
     /// Gets the total tax amount
@@ -143,14 +145,14 @@ public class Invoice
     /// <summary>
     /// Gets the final total amount due
     /// </summary>
-    public decimal GetTotal() =>
-        GetTotalAfterDiscounts() + GetTotalTax() + GetTotalSurcharges();
+    public decimal GetTotal()
+        => GetTotalAfterDiscounts() + GetTotalTax() + GetTotalSurcharges();
 
     /// <summary>
     /// Gets the total amount paid
     /// </summary>
-    public decimal GetTotalPaid() =>
-        Payments.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Amount);
+    public decimal GetTotalPaid()
+        => Payments.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Amount);
 
     /// <summary>
     /// Gets the total amount refunded
@@ -221,7 +223,7 @@ public class Invoice
     /// </summary>
     public void MarkAsSent()
     {
-        if (Status == InvoiceStatus.Draft || Status == InvoiceStatus.Pending)
+        if (Status is InvoiceStatus.Draft or InvoiceStatus.Pending)
         {
             Status = InvoiceStatus.Sent;
         }

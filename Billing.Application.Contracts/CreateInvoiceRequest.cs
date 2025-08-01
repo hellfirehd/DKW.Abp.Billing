@@ -9,7 +9,7 @@ public class CreateInvoiceRequest
     public string CustomerEmail { get; set; } = string.Empty;
     public string BillingAddress { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
-    public Province State { get; set; }
+    public Province State { get; set; } = Province.Empty;
     public List<CreateInvoiceItemRequest> Items { get; set; } = [];
     public decimal ShippingCost { get; set; }
     public string ShippingMethod { get; set; } = string.Empty;

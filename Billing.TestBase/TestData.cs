@@ -1,4 +1,6 @@
-﻿using Bogus;
+﻿using Billing.Customers;
+using Bogus;
+using System.Text.RegularExpressions;
 using Volo.Abp.DependencyInjection;
 
 namespace Billing;
@@ -6,8 +8,10 @@ namespace Billing;
 /// <summary>
 /// Builder class for creating test data for billing system tests
 /// </summary>
-public class TestData : ITransientDependency
+public partial class TestData : ITransientDependency
 {
+    private static ProvinceManager PM { get; } = new ProvinceManager();
+
     /// <summary>
     /// Creates a complete test scenario with invoice, items, taxes, and payments
     /// </summary>
@@ -45,7 +49,7 @@ public class TestData : ITransientDependency
         {
             InvoiceNumber = "INV-2024-001",
             Customer = Customer(),
-            Province = Provinces.NS,
+            Province = PM.GetProvince("NS"),
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             ShippingCost = 25.00m,
             ShippingMethod = "Express Shipping"
@@ -104,8 +108,8 @@ public class TestData : ITransientDependency
         var invoice = new Invoice
         {
             InvoiceNumber = "INV-SIMPLE-001",
-            Customer = Customer(Provinces.BC),
-            Province = Provinces.BC,
+            Customer = Customer(PM.GetProvince("BC")),
+            Province = PM.GetProvince("BC"),
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15))
         };
 
@@ -127,26 +131,22 @@ public class TestData : ITransientDependency
         .RuleFor(c => c.Id, f => f.Random.Guid())
         .RuleFor(c => c.Name, f => f.Person.FullName)
         .RuleFor(c => c.Addresses, f => [Address(isDefault: false, isBilling: true), Address(isDefault: false, isShipping: true)])
-        .RuleFor(c => c.PhoneNumbers, _ => [])
-        .RuleFor(c => c.EmailAddresses, f => [new EmailAddress(f.Person.Email, f.Person.FullName)])
+        .RuleFor(c => c.EmailAddresses, f => new Email(f.Person.Email))
         .RuleFor(c => c.PaymentMethods, f => [])
         .RuleFor(c => c.TaxProfile, f => default);
 
     public static Address Address(Province? province = null, Boolean isDefault = false, Boolean? isBilling = null, Boolean? isShipping = null) => new Faker<Address>()
-        .RuleFor(a => a.Id, f => f.Random.Guid())
         .RuleFor(a => a.Line1, f => f.Address.StreetAddress())
         .RuleFor(a => a.Line2, f => f.Lorem.Word())
         .RuleFor(a => a.City, f => f.Address.City())
-        .RuleFor(a => a.Province, f => province is null ? f.PickRandom(Provinces.All) : province)
+        .RuleFor(a => a.Province, f => province is null ? f.PickRandom(PM.GetAllProvinces()) : province)
         .RuleFor(a => a.PostalCode, f => f.Address.ZipCode())
         .RuleFor(a => a.Country, f => "Canada")
         .RuleFor(a => a.IsDefault, f => isDefault)
         .RuleFor(a => a.IsShippingAddress, f => isDefault ? true : isShipping.HasValue ? isShipping : f.Random.Bool())
-        .RuleFor(a => a.IsBillingAddress, f => isDefault ? true : isBilling.HasValue ? isBilling : f.Random.Bool());
-
-    public static PhoneNumber PhoneNumber() => new Faker<PhoneNumber>()
-        .RuleFor(p => p.CountryCode, 1)
-        .RuleFor(p => p.Number, f => f.Random.Int(111111111, 99999999));
+        .RuleFor(a => a.IsBillingAddress, f => isDefault ? true : isBilling.HasValue ? isBilling : f.Random.Bool())
+        .RuleFor(a => a.Name, f => f.Person.FullName)
+        .RuleFor(a => a.PhoneNumber, f => new PhoneNumber(f.Person.Phone));
 
     /// <summary>
     /// Creates payment and refund test scenarios
@@ -183,4 +183,7 @@ public class TestData : ITransientDependency
 
         return (fullPayment, partialPayment, refund);
     }
+
+    [GeneratedRegex(@"[^\d]")]
+    private static partial Regex NonNumeric();
 }

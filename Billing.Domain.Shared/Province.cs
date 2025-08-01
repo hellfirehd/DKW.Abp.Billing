@@ -3,7 +3,7 @@
 namespace Billing;
 
 [DebuggerDisplay("{Code}")]
-public readonly struct Province : IEquatable<Province>, IComparable<Province>
+public sealed record Province : IEquatable<Province>, IComparable<Province>
 {
     public static readonly Province Empty = new();
 
@@ -18,7 +18,18 @@ public readonly struct Province : IEquatable<Province>, IComparable<Province>
         Code = code.Trim().ToUpperInvariant();
     }
 
-    public static Province Create(String code, String name) => new(code, name);
+    public static Province Create(String code, String name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        if (code.Length != 2)
+        {
+            throw new ArgumentException("Province code must be exactly 2 characters long.", nameof(code));
+        }
+
+        return new(code, name);
+    }
 
     public String Code { get; } = String.Empty;
     public String Name { get; } = String.Empty;
@@ -26,25 +37,23 @@ public readonly struct Province : IEquatable<Province>, IComparable<Province>
     public override String ToString() => Code;
 
     // IEquatable<Province> implementation
-    public Boolean Equals(Province other)
-        => String.Equals(Code, other.Code, StringComparison.OrdinalIgnoreCase);
-
-    public override Boolean Equals(Object? obj) => obj is Province other && Equals(other);
+    public Boolean Equals(Province? other)
+        => other is not null && String.Equals(Code, other.Code, StringComparison.OrdinalIgnoreCase);
 
     public override Int32 GetHashCode() => HashCode.Combine(Code.ToUpperInvariant(), Name.ToUpperInvariant());
 
     // IComparable<Province> implementation
-    public Int32 CompareTo(Province other)
+    public Int32 CompareTo(Province? other)
     {
+        if (other is null)
+        {
+            return 1;
+        }
+
         // Compare by Name first, then by Code if Codes are equal
         Int32 nameComparison = String.Compare(Name, other.Name, StringComparison.OrdinalIgnoreCase);
-        return nameComparison != 0 ? nameComparison : String.Compare(Code, other.Name, StringComparison.OrdinalIgnoreCase);
+        return nameComparison != 0 ? nameComparison : String.Compare(Code, other.Code, StringComparison.OrdinalIgnoreCase);
     }
-
-    // Equality operators
-    public static Boolean operator ==(Province left, Province right) => left.Equals(right);
-
-    public static Boolean operator !=(Province left, Province right) => !(left == right);
 
     // Comparison operators
     public static Boolean operator <(Province left, Province right) => left.CompareTo(right) < 0;
@@ -57,3 +66,4 @@ public readonly struct Province : IEquatable<Province>, IComparable<Province>
 
     public static implicit operator String(Province province) => province.ToString();
 }
+

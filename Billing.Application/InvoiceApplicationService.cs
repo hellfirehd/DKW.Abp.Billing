@@ -5,6 +5,7 @@
 /// </summary>
 public class InvoiceApplicationService : IInvoiceApplicationService
 {
+    // ToDo: Inject repositories for persistence
     private readonly Dictionary<Guid, Invoice> _invoices = [];
     private readonly Dictionary<Guid, Discount> _discounts = [];
     private readonly Dictionary<Guid, Surcharge> _surcharges = [];
@@ -196,7 +197,7 @@ public class InvoiceApplicationService : IInvoiceApplicationService
         throw new NotImplementedException();
     }
 
-    private InvoiceItem CreateInvoiceItem(CreateInvoiceItemRequest request)
+    private static InvoiceItem CreateInvoiceItem(CreateInvoiceItemRequest request)
     {
         InvoiceItem item = request.ItemType.ToLower() switch
         {
