@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.Abp.Billing</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Dkw.Abp.Billing.Application\Dkw.Abp.Billing.Application.csproj" />
+        <ProjectReference Include="..\Billing.Domain.Tests\Billing.Domain.Tests.csproj" />
+        <ProjectReference Include="..\Billing.TestBase\Billilng.TestBase.csproj" />
+    </ItemGroup>
+
+</Project>
