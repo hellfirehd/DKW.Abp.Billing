@@ -8,14 +8,14 @@ namespace Billing;
 public class Invoice
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
-    public string InvoiceNumber { get; set; } = string.Empty;
+    public String InvoiceNumber { get; set; } = String.Empty;
     public DateOnly InvoiceDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public DateOnly? DueDate { get; set; }
     public InvoiceStatus Status { get; private set; } = InvoiceStatus.Draft;
 
     // Customer Information
     public Customer Customer { get; set; } = new Customer();
-    public string CustomerName { get; set; } = string.Empty;
+    public String CustomerName { get; set; } = String.Empty;
     public Province Province { get; set; } = Province.Empty; // For tax calculations
 
     // Line Items
@@ -28,15 +28,15 @@ public class Invoice
     public List<Surcharge> Surcharges { get; private set; } = [];
 
     // Shipping
-    public decimal ShippingCost { get; set; }
-    public string ShippingMethod { get; set; } = string.Empty;
+    public Decimal ShippingCost { get; set; }
+    public String ShippingMethod { get; set; } = String.Empty;
 
     // Payments and Refunds
     public List<Payment> Payments { get; private set; } = [];
     public List<Refund> Refunds { get; private set; } = [];
 
     // Tax Rates applied
-    public List<ItemTaxRate> ApplicableTaxes { get; private set; } = [];
+    public List<TaxRate> ApplicableTaxes { get; private set; } = [];
 
     /// <summary>
     /// Adds an item to the invoice
@@ -80,10 +80,10 @@ public class Invoice
     /// <summary>
     /// Sets the tax rates and recalculates taxes
     /// </summary>
-    public void SetTaxRates(IEnumerable<ItemTaxRate> taxes)
+    public void SetTaxRates(IEnumerable<TaxRate> taxRates)
     {
         ApplicableTaxes.Clear();
-        ApplicableTaxes.AddRange(taxes);
+        ApplicableTaxes.AddRange(taxRates);
 
         // Apply taxes to each line item
         foreach (var item in Items)
@@ -91,28 +91,32 @@ public class Invoice
             item.ApplyTaxes(ApplicableTaxes);
         }
 
+        // ToDo: Is this redundant?
         RecalculateTotals();
     }
 
     /// <summary>
     /// Gets the subtotal of all line items before discounts and taxes
     /// </summary>
-    public decimal GetSubtotal() => Items.Sum(item => item.GetSubtotal());
+    public Decimal GetSubtotal()
+        => Items.Sum(item => item.GetSubtotal());
 
     /// <summary>
     /// Gets the total discount amount from line items
     /// </summary>
-    public decimal GetLineItemDiscounts() => Items.Sum(item => item.GetTotalDiscount());
+    public Decimal GetLineItemDiscounts()
+        => Items.Sum(item => item.GetDiscountTotal());
 
     /// <summary>
     /// Gets the total after line item discounts but before order discounts
     /// </summary>
-    public decimal GetDiscountedSubtotal() => Items.Sum(item => item.GetDiscountedTotal());
+    public Decimal GetDiscountedSubtotal()
+        => Items.Sum(item => item.GetDiscountedTotal());
 
     /// <summary>
     /// Gets the total order-level discount amount
     /// </summary>
-    public decimal GetOrderDiscounts()
+    public Decimal GetOrderDiscounts()
     {
         var discountedSubtotal = GetDiscountedSubtotal();
         return OrderDiscounts
@@ -123,18 +127,19 @@ public class Invoice
     /// <summary>
     /// Gets the total after all discounts but before taxes and surcharges
     /// </summary>
-    public decimal GetTotalAfterDiscounts()
+    public Decimal GetTotalAfterDiscounts()
         => Math.Max(0, GetDiscountedSubtotal() - GetOrderDiscounts() + ShippingCost);
 
     /// <summary>
     /// Gets the total tax amount
     /// </summary>
-    public decimal GetTotalTax() => Items.Sum(item => item.GetTotalTax());
+    public Decimal GetTotalTax()
+        => Items.Sum(item => item.GetTaxTotal());
 
     /// <summary>
     /// Gets the total surcharge amount
     /// </summary>
-    public decimal GetTotalSurcharges()
+    public Decimal GetTotalSurcharges()
     {
         var baseAmount = GetTotalAfterDiscounts() + GetTotalTax();
         return Surcharges
@@ -145,24 +150,26 @@ public class Invoice
     /// <summary>
     /// Gets the final total amount due
     /// </summary>
-    public decimal GetTotal()
+    public Decimal GetTotal()
         => GetTotalAfterDiscounts() + GetTotalTax() + GetTotalSurcharges();
 
     /// <summary>
     /// Gets the total amount paid
     /// </summary>
-    public decimal GetTotalPaid()
-        => Payments.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Amount);
+    public Decimal GetTotalPaid() => Payments
+        .Where(p => p.Status == PaymentStatus.Completed)
+        .Sum(p => p.Amount);
 
     /// <summary>
     /// Gets the total amount refunded
     /// </summary>
-    public decimal GetTotalRefunded() => Refunds.Sum(r => r.Amount);
+    public Decimal GetTotalRefunded()
+        => Refunds.Sum(r => r.Amount);
 
     /// <summary>
     /// Gets the outstanding balance
     /// </summary>
-    public decimal GetBalance() => GetTotal() - GetTotalPaid() + GetTotalRefunded();
+    public Decimal GetBalance() => GetTotal() - GetTotalPaid() + GetTotalRefunded();
 
     /// <summary>
     /// Adds a payment to the invoice

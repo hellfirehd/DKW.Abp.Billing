@@ -20,7 +20,7 @@ public readonly struct CorrelationId(Guid correlationId) : IEquatable<Correlatio
 
     public Int32 CompareTo(CorrelationId other) => throw new NotImplementedException();
 
-    public int CompareTo(Guid other) => throw new NotImplementedException();
+    public Int32 CompareTo(Guid other) => throw new NotImplementedException();
 
     public static Boolean operator ==(CorrelationId left, CorrelationId right) => left.Equals(right);
 

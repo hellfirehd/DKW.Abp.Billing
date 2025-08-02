@@ -3,5 +3,5 @@
 public interface IPaymentMethod
 {
     PaymentType PaymentType { get; }
-    string Details { get; }
+    String Details { get; }
 }

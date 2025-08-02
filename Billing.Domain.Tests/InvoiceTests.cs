@@ -5,47 +5,29 @@
 /// </summary>
 public partial class InvoiceTests
 {
-    private readonly CanadianTaxProvider _taxProvider = new();
-    private readonly ProvinceManager _pm = new();
+    private static readonly DateOnly EffectiveDate = new(2025, 01, 01);
+
+    private readonly ITaxProvider _taxProvider = TestData.TaxProvider;
+    private readonly ProvinceManager _pm = TestData.ProvinceManager;
     private readonly TestData _testDataBuilder = new();
 
     [Fact]
     public void SetTaxRates_ShouldApplyCorrectTaxes_ByCategory()
     {
         // Arrange
-        var taxProvider = new CanadianTaxProvider();
-        var invoice = new Invoice { Province = _pm.GetProvince("BC") };
+        var invoice = new Invoice { Province = _pm.GetProvince("BC"), InvoiceDate = EffectiveDate };
 
-        var taxableProduct = new Product
-        {
-            Description = "Taxable Product",
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
-
-        var taxableService = new Service
-        {
-            Description = "Taxable Service",
-            HourlyRate = 100.00m,
-            Hours = 1.0m,
-            TaxCategory = TaxCategory.TaxableService
-        };
-
-        var nonTaxableProduct = new Product
-        {
-            Description = "Non-Taxable Product",
-            UnitPrice = 50.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.NonTaxableProduct
-        };
-
+        var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(taxableProduct);
+
+        var taxableService = TestData.TaxableServiceItem(EffectiveDate);
         invoice.AddItem(taxableService);
+
+        var nonTaxableProduct = TestData.NonTaxableProductItem(EffectiveDate);
         invoice.AddItem(nonTaxableProduct);
 
         // Act
-        var allTaxRates = taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        var allTaxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
         invoice.SetTaxRates(allTaxRates);
 
         // Assert
@@ -66,23 +48,10 @@ public partial class InvoiceTests
         };
 
         // Add multiple items with different tax treatments
-        var software = new Product
-        {
-            Description = "Software License",
-            UnitPrice = 200.00m,
-            Quantity = 2,
-            TaxCategory = TaxCategory.DigitalProduct
-        };
-
-        var consulting = new Service
-        {
-            Description = "Professional Consulting",
-            HourlyRate = 150.00m,
-            Hours = 4.0m,
-            TaxCategory = TaxCategory.TaxableService
-        };
-
+        var software = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(software);
+
+        var consulting = TestData.NonTaxableProductItem(EffectiveDate);
         invoice.AddItem(consulting);
 
         // Apply volume discount
@@ -130,24 +99,12 @@ public partial class InvoiceTests
         // Arrange
         var invoice = new Invoice { Province = _pm.GetProvince("BC") }; // BC: 5% GST + 7% PST = 12%
 
-        var taxableProduct = new Product
-        {
-            Description = "Standard Product",
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
-
-        var nonTaxableProduct = new Product
-        {
-            Description = "Non-Taxable Product",
-            UnitPrice = 50.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.NonTaxableProduct
-        };
-
+        var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(taxableProduct);
+
+        var nonTaxableProduct = TestData.NonTaxableProductItem(EffectiveDate);
         invoice.AddItem(nonTaxableProduct);
+
         var allTaxRates = _taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
 
         // Act
@@ -165,28 +122,15 @@ public partial class InvoiceTests
     public void TaxCalculation_ShouldBeAccurate_ForComplexScenario()
     {
         // Arrange
-        var taxProvider = new CanadianTaxProvider();
         var invoice = new Invoice
         {
             Province = _pm.GetProvince("ON"), // 13% HST
             ShippingCost = 10.00m
         };
 
-        var product = new Product
-        {
-            Description = "Software License",
-            UnitPrice = 199.99m,
-            Quantity = 2,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
 
-        var service = new Service
-        {
-            Description = "Support Service",
-            HourlyRate = 50.00m,
-            Hours = 3.0m,
-            TaxCategory = TaxCategory.TaxableService
-        };
+        var service = TestData.TaxableServiceItem(EffectiveDate);
 
         // Add line item discount
         var itemDiscount = new Discount
@@ -225,7 +169,7 @@ public partial class InvoiceTests
         invoice.AddSurcharge(surcharge);
 
         // Apply taxes
-        var taxRates = taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
+        var taxRates = TestData.TaxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
         invoice.SetTaxRates(taxRates);
 
         // Act & Assert
@@ -269,14 +213,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            Description = "Test Product",
-            UnitPrice = 100.00m,
-            Quantity = 2,
-            TaxCategory = TaxCategory.TaxableProduct,
-            SKU = "TEST-001"
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
 
         // Act
         invoice.AddItem(product);
@@ -292,12 +229,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            Description = "Test Product",
-            UnitPrice = 100.00m,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         // Act
@@ -312,28 +244,15 @@ public partial class InvoiceTests
     public void Invoice_SetTaxRates_ShouldApplyTaxesToTaxableItems()
     {
         // Arrange
-        var taxProvider = new CanadianTaxProvider();
-        var invoice = new Invoice { Province = _pm.GetProvince("NS") };
-        var taxableProduct = new Product
-        {
-            Description = "Taxable Product",
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
-        var nonTaxableProduct = new Product
-        {
-            Description = "Non-Taxable Product",
-            UnitPrice = 50.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.NonTaxableProduct
-        };
+        var invoice = new Invoice { Province = TestData.NovaScotia };
 
+        var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(taxableProduct);
+
+        var nonTaxableProduct = TestData.NonTaxableProductItem(EffectiveDate);
         invoice.AddItem(nonTaxableProduct);
 
-        var taxRates = taxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate)
-            .ToList();
+        var taxRates = TestData.TaxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
 
         // Act
         invoice.SetTaxRates(taxRates);
@@ -349,12 +268,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            UnitPrice = 500.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         var orderDiscount = new Discount
@@ -379,12 +293,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         var surcharge = new Surcharge
@@ -409,12 +318,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         var payment = new Payment
@@ -439,12 +343,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         var payment = new Payment
@@ -476,12 +375,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(product);
 
         var payment = new Payment
@@ -510,8 +404,7 @@ public partial class InvoiceTests
         {
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)) // Past due
         };
-        var product = new Product { UnitPrice = 100.00m, Quantity = 1 };
-        invoice.AddItem(product);
+        invoice.AddItem(TestData.TaxableProductItem(EffectiveDate));
 
         // Act
         invoice.UpdateStatus();
@@ -534,12 +427,11 @@ public partial class InvoiceTests
     }
 
     [Fact]
-    public void Cancel_ShouldCancelInvoice_WhenNoPayments()
+    public void Cancel_Allow_WhenNoPayments()
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product { UnitPrice = 100.00m, Quantity = 1 };
-        invoice.AddItem(product);
+        invoice.AddItem(TestData.TaxableProductItem(EffectiveDate));
 
         // Act
         invoice.Cancel();
@@ -553,8 +445,7 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product { UnitPrice = 100.00m, Quantity = 1 };
-        invoice.AddItem(product);
+        invoice.AddItem(TestData.TaxableProductItem(EffectiveDate));
 
         var payment = new Payment
         {
@@ -612,20 +503,14 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice();
-        var product = new Product
-        {
-            Description = "Test Product",
-            UnitPrice = 100.00m,
-            Quantity = 2,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
+        var product = TestData.TaxableProductItem(EffectiveDate);
 
         // Act
         invoice.AddItem(product);
 
         // Assert
         Assert.Single(invoice.Items);
-        Assert.Equal(200.00m, invoice.GetSubtotal());
+        Assert.Equal(100.00m, invoice.GetSubtotal());
     }
 
     [Fact]
@@ -633,22 +518,12 @@ public partial class InvoiceTests
     {
         // Arrange
         var invoice = new Invoice { Province = _pm.GetProvince("BC") };
-        var taxableProduct = new Product
-        {
-            Description = "Taxable Product",
-            UnitPrice = 100.00m,
-            TaxCategory = TaxCategory.TaxableProduct
-        };
-
+        var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(taxableProduct);
-
-        var taxRates = new List<ItemTaxRate>
-        {
-            new("GST" , TaxCategory.DigitalProduct, new TaxRate(new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1), 0.0875m))
-        };
+        var tax = new Tax("GST", "GST").AddTaxRate(0.05m, new DateOnly(2000, 1, 1)); // 5% GST
 
         // Act
-        invoice.SetTaxRates(taxRates);
+        invoice.SetTaxRates([tax.GetTaxRate(invoice.InvoiceDate)!]);
 
         // Assert
         Assert.Equal(8.75m, invoice.GetTotalTax());
@@ -664,7 +539,7 @@ public partial class InvoiceTests
     //[Theory]
     //[InlineData(-1, "Amount cannot be negative")]
     //[InlineData(0, "Amount must be greater than zero")]
-    //public void Payment_ShouldValidateAmount(decimal amount, string expectedError)
+    //public void Payment_ShouldValidateAmount(Decimal amount, String expectedError)
     //{
     //    // Input validation tests
     //    throw new NotImplementedException();

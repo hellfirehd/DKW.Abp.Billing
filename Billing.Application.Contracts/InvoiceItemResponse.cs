@@ -3,13 +3,12 @@
 public class InvoiceItemResponse
 {
     public Guid Id { get; set; }
-    public string Description { get; set; } = string.Empty;
-    public decimal UnitPrice { get; set; }
-    public int Quantity { get; set; }
-    public decimal Subtotal { get; set; }
-    public decimal TotalTax { get; set; }
-    public decimal TotalDiscount { get; set; }
-    public decimal Total { get; set; }
-    public TaxCategory Category { get; set; }
-    public string ItemType { get; set; } = string.Empty;
+    public String Description { get; set; } = String.Empty;
+    public Decimal UnitPrice { get; set; }
+    public Decimal Quantity { get; set; }
+    public Decimal Subtotal { get; set; }
+    public Decimal TotalTax { get; set; }
+    public Decimal TotalDiscount { get; set; }
+    public Decimal Total { get; set; }
+    public ItemType ItemType { get; set; }
 }

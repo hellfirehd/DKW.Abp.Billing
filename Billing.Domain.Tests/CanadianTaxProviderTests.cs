@@ -5,8 +5,9 @@ namespace Billing.Domain.Tests;
 /// </summary>
 public class CanadianTaxProviderTests
 {
-    private readonly CanadianTaxProvider _taxProvider = new();
-    private readonly ProvinceManager _pm = new();
+    private static readonly DateOnly EffectiveDate = new(2025, 01, 01);
+
+    private CanadianTaxProvider SUT { get; } = new CanadianTaxProvider(TestData.ProvinceManager, TimeProvider.System);
 
     [Fact]
     public void GetTaxRates_ShouldReturnCorrectRates_ForNovaScotia()
@@ -15,12 +16,12 @@ public class CanadianTaxProviderTests
         var effectiveDate = new DateOnly(2023, 6, 1);
 
         // Act
-        var rates = _taxProvider.GetTaxRates(_pm.GetProvince("NS"), effectiveDate);
+        var rates = SUT.GetTaxRates(TestData.NovaScotia, effectiveDate);
 
         // Assert
         Assert.Single(rates);
-        Assert.Equal("NS-HST", rates[0].Code);
-        Assert.Equal(0.15m, rates[0].TaxRate.Rate); // 15% HST
+        Assert.Equal("NS-HST", rates.Single().Code);
+        Assert.Equal(0.15m, rates.Single().Rate); // 15% HST
     }
 
     [Fact]
@@ -30,79 +31,32 @@ public class CanadianTaxProviderTests
         var effectiveDate = new DateOnly(2023, 6, 1);
 
         // Act
-        var rates = _taxProvider.GetTaxRates(_pm.GetProvince("BC"), effectiveDate);
+        var rates = SUT.GetTaxRates(TestData.BritishColumbia, effectiveDate);
 
         // Assert
-        Assert.Equal(2, rates.Length); // GST + PST
+        Assert.Equal(2, rates.Count()); // GST + PST
 
         var gst = rates.First(r => r.Code == "GST");
         var pst = rates.First(r => r.Code == "BC-PST");
 
-        Assert.Equal(0.05m, gst.TaxRate.Rate); // 5% GST
-        Assert.Equal(0.07m, pst.TaxRate.Rate); // 7% PST
-    }
-
-    [Fact]
-    public void GetTaxRatesForCategory_ShouldReturnEmptyArray_ForNonTaxableProducts()
-    {
-        // Arrange
-        var effectiveDate = new DateOnly(2023, 6, 1);
-
-        // Act
-        var rates = _taxProvider.GetTaxRatesForCategory(_pm.GetProvince("BC"), effectiveDate, TaxCategory.NonTaxableProduct);
-
-        // Assert
-        Assert.Empty(rates);
-    }
-
-    [Fact]
-    public void HasTaxConfiguration_ShouldReturnTrue_ForAllCanadianProvinces()
-    {
-        // Act & Assert
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("AB")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("BC")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("MB")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("NB")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("NL")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("NS")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("ON")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("PE")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("QC")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("SK")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("NT")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("NU")));
-        Assert.True(_taxProvider.HasTaxConfiguration(_pm.GetProvince("YT")));
-    }
-
-    [Fact]
-    public void GetSupportedProvinces_ShouldReturnAllCanadianProvinces()
-    {
-        // Act
-        var provinces = _taxProvider.GetSupportedProvinces();
-
-        // Assert
-        Assert.Equal(13, provinces.Length); // All Canadian provinces and territories
-        Assert.Contains(_pm.GetProvince("AB"), provinces);
-        Assert.Contains(_pm.GetProvince("BC"), provinces);
-        Assert.Contains(_pm.GetProvince("NS"), provinces);
-        Assert.Contains(_pm.GetProvince("ON"), provinces);
-        Assert.Contains(_pm.GetProvince("QC"), provinces);
+        Assert.Equal(0.05m, gst.Rate); // 5% GST
+        Assert.Equal(0.07m, pst.Rate); // 7% PST
     }
 
     [Theory]
     [InlineData("2023-06-01", 0.15)] // Current rate
     [InlineData("2025-05-01", 0.14)] // Future reduced rate
-    public void GetTaxRates_ShouldReturnCorrectHistoricalRates_ForNovaScotia(string dateString, decimal expectedRate)
+    public void GetTaxRates_ShouldReturnCorrectHistoricalRates_ForNovaScotia(String dateString, Decimal expectedRate)
     {
         // Arrange
         var effectiveDate = DateOnly.Parse(dateString);
 
         // Act
-        var rates = _taxProvider.GetTaxRates(_pm.GetProvince("NS"), effectiveDate);
+        var rates = SUT.GetTaxRates(TestData.NovaScotia, effectiveDate);
 
         // Assert
         Assert.Single(rates);
-        Assert.Equal(expectedRate, rates[0].TaxRate.Rate);
+        Assert.Equal(expectedRate, rates.Single().Rate);
     }
 
     [Theory]
@@ -113,17 +67,17 @@ public class CanadianTaxProviderTests
     [InlineData("NT", 1)] // Northwest Territories - GST only
     [InlineData("NU", 1)] // Nunavut - GST only
     [InlineData("YT", 1)] // Yukon - GST only
-    public void GetTaxRates_ShouldReturnCorrectNumberOfTaxes_ByProvince(string provinceCode, int expectedCount)
+    public void GetTaxRates_ShouldReturnCorrectNumberOfTaxes_ByProvince(String provinceCode, Int32 expectedCount)
     {
         // Arrange
-        var province = _pm.GetProvince(provinceCode);
+        var province = TestData.ProvinceManager.GetProvince(provinceCode);
         var effectiveDate = new DateOnly(2023, 6, 1);
 
         // Act
-        var rates = _taxProvider.GetTaxRates(province, effectiveDate);
+        var rates = SUT.GetTaxRates(province, effectiveDate);
 
         // Assert
-        Assert.Equal(expectedCount, rates.Length);
+        Assert.Equal(expectedCount, rates.Count());
     }
 
     [Theory]
@@ -131,19 +85,19 @@ public class CanadianTaxProviderTests
     [InlineData("NT")] // Northwest Territories - GST only  
     [InlineData("NU")] // Nunavut - GST only
     [InlineData("YT")] // Yukon - GST only
-    public void GetTaxRates_ShouldReturnGSTOnly_ForGSTOnlyProvinces(string provinceCode)
+    public void GetTaxRates_ShouldReturnGSTOnly_ForGSTOnlyProvinces(String provinceCode)
     {
         // Arrange
-        var province = _pm.GetProvince(provinceCode);
+        var province = TestData.ProvinceManager.GetProvince(provinceCode);
         var effectiveDate = new DateOnly(2023, 6, 1);
 
         // Act
-        var rates = _taxProvider.GetTaxRates(province, effectiveDate);
+        var rates = SUT.GetTaxRates(province, effectiveDate);
 
         // Assert
         Assert.Single(rates);
-        Assert.Equal("GST", rates[0].Code);
-        Assert.Equal(0.05m, rates[0].TaxRate.Rate);
+        Assert.Equal("GST", rates.Single().Code);
+        Assert.Equal(0.05m, rates.Single().Rate);
     }
 
     [Fact]
@@ -153,26 +107,23 @@ public class CanadianTaxProviderTests
         // Basic groceries should be zero-rated (0% but still tracked)
 
         // For now, we simulate this with existing structure
-        var groceries = new Product
+        var profile = new CustomerTaxProfile()
         {
-            Description = "Basic Groceries (Milk, Bread, Eggs)",
-            UnitPrice = 25.00m,
-            TaxCategory = TaxCategory.NonTaxableProduct // Simulating zero-rated
+            EffectiveDate = EffectiveDate,
+            TaxProvince = TestData.BritishColumbia,
         };
 
-        var invoice = new Invoice { Province = _pm.GetProvince("BC") };
-        invoice.AddItem(groceries);
+        var invoice = new Invoice { Province = TestData.BritishColumbia };
+        var invoiceItem = TestData.CreateInvoiceItem(TestData.NonTaxableProductId, EffectiveDate);
+        invoice.AddItem(invoiceItem);
 
-        var taxRates = _taxProvider.GetTaxRatesForCategory(
-            invoice.Province,
-            invoice.InvoiceDate,
-            groceries.TaxCategory);
+        var taxRates = TestData.InvoiceManager.GetTaxRatesForItem(invoiceItem, profile, invoice.InvoiceDate);
 
-        groceries.ApplyTaxes(taxRates);
+        invoiceItem.ApplyTaxes(taxRates);
 
         // Should have no tax (simulating zero-rated for now)
-        Assert.Equal(0m, groceries.GetTotalTax());
-        Assert.Equal(25.00m, groceries.GetTotal());
+        Assert.Equal(0m, invoiceItem.GetTaxTotal());
+        Assert.Equal(25.00m, invoiceItem.GetTotal());
 
         // Future enhancement: This would track as zero-rated rather than non-taxable
         // to support proper GST/HST compliance reporting
@@ -182,33 +133,37 @@ public class CanadianTaxProviderTests
     public void TaxCodeSystem_ConceptDemo_ShouldHandleCustomerExemptions()
     {
         // This test demonstrates customer-level exemptions concept
-
-        var standardProduct = new Product
+        var regular = new CustomerTaxProfile()
         {
-            Description = "Office Supplies",
-            UnitPrice = 100.00m,
-            TaxCategory = TaxCategory.TaxableProduct
+            EffectiveDate = EffectiveDate,
+            TaxProvince = TestData.BritishColumbia,
+            RecipientStatus = RecipientStatus.Regular
         };
 
-        var invoice = new Invoice { Province = _pm.GetProvince("BC") };
-        invoice.AddItem(standardProduct);
+        var exempt = new CustomerTaxProfile()
+        {
+            EffectiveDate = EffectiveDate,
+            TaxProvince = TestData.BritishColumbia,
+            RecipientStatus = RecipientStatus.TaxExempt
+        };
+
+        var invoice = new Invoice { Province = TestData.BritishColumbia };
+        var invoiceItem = TestData.CreateInvoiceItem(TestData.TaxableProductId, EffectiveDate);
+        invoice.AddItem(invoiceItem);
 
         // Test 1: Regular customer gets full tax
-        var regularTaxRates = _taxProvider.GetTaxRatesForCategory(
-            invoice.Province,
-            invoice.InvoiceDate,
-            standardProduct.TaxCategory);
+        var regularTaxRates = TestData.InvoiceManager.GetTaxRatesForItem(invoiceItem, regular, invoice.InvoiceDate);
 
-        standardProduct.ApplyTaxes(regularTaxRates);
-        var regularTax = standardProduct.GetTotalTax();
+        invoiceItem.ApplyTaxes(regularTaxRates);
+        var regularTax = invoiceItem.GetTaxTotal();
 
         // Reset for exempt customer test
-        standardProduct.AppliedTaxes.Clear();
+        invoiceItem.AppliedTaxes.Clear();
 
         // Test 2: Exempt customer gets no tax (simulated by applying no rates)
-        var exemptTaxRates = Array.Empty<ItemTaxRate>(); // Simulating exemption
-        standardProduct.ApplyTaxes(exemptTaxRates);
-        var exemptTax = standardProduct.GetTotalTax();
+        var exemptTaxRates = TestData.InvoiceManager.GetTaxRatesForItem(invoiceItem, exempt, EffectiveDate); // Simulating exemption
+        invoiceItem.ApplyTaxes(exemptTaxRates);
+        var exemptTax = invoiceItem.GetTaxTotal();
 
         Assert.True(regularTax > 0);
         Assert.Equal(0m, exemptTax);

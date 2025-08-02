@@ -1,6 +1,6 @@
 ﻿namespace Billing.EntityFrameworkCore;
 
-public class TaxCodeRepository
+public class FakeTaxCodeRepository : ITaxCodeRepository
 {
     private readonly Dictionary<String, TaxCode> _taxCodes = new()
     {
@@ -112,9 +112,10 @@ public class TaxCodeRepository
         }
     };
 
-    public TaxCode? GetByCode(string code)
+    public TaxCode GetByCode(String code)
     {
-        return _taxCodes[code];
+        return _taxCodes[code]
+            ?? throw new KeyNotFoundException($"Tax code '{code}' not found.");
     }
 
     public IEnumerable<TaxCode> GetAll()
@@ -135,7 +136,7 @@ public class TaxCodeRepository
         _taxCodes[taxCode.Code] = taxCode;
     }
 
-    public void Delete(string code)
+    public void Delete(String code)
     {
         var taxCode = GetByCode(code);
         if (taxCode != null)

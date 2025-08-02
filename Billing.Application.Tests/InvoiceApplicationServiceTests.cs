@@ -6,14 +6,12 @@
 public class InvoiceApplicationServiceTests
 {
     private readonly ProvinceManager _pm;
-    private readonly InvoiceApplicationService _invoiceService;
-    private readonly TestData _testDataBuilder;
+    private InvoiceApplicationService SUT { get; }
 
     public InvoiceApplicationServiceTests()
     {
-        _pm = new ProvinceManager();
-        _invoiceService = new InvoiceApplicationService();
-        _testDataBuilder = new TestData();
+        SUT = new InvoiceApplicationService(TestData.InvoiceItemManager, TestData.TaxProvider);
+        _pm = TestData.ProvinceManager;
     }
 
     [Fact]
@@ -31,12 +29,8 @@ public class InvoiceApplicationServiceTests
             [
                 new CreateInvoiceItemRequest
                 {
-                    Description = "Test Product",
-                    UnitPrice = 100.00m,
-                    Quantity = 2,
-                    Category = TaxCategory.TaxableProduct,
-                    ItemType = "Product",
-                    SKU = "TEST-001"
+                    ItemId = TestData.TaxableProductId, // $100.00
+                    Quantity = 2.0m
                 }
             ],
             ShippingCost = 15.00m,
@@ -44,17 +38,18 @@ public class InvoiceApplicationServiceTests
         };
 
         // Act
-        var invoiceId = await _invoiceService.CreateInvoiceAsync(request);
+        var invoiceId = await SUT.CreateInvoiceAsync(request);
 
         // Assert
         invoiceId.ShouldNotBe(Guid.Empty);
 
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(invoice);
         Assert.Equal("INV-TEST-001", invoice.InvoiceNumber);
         Assert.Equal("Test Customer", invoice.CustomerName);
         Assert.Single(invoice.Items);
         Assert.Equal(200.00m, invoice.Subtotal);
+        Assert.Equal(15.00m, invoice.ShippingCost);
     }
 
     [Fact]
@@ -70,20 +65,17 @@ public class InvoiceApplicationServiceTests
             [
                 new CreateInvoiceItemRequest
                 {
-                    Description = "Taxable Product",
-                    UnitPrice = 100.00m,
+                    ItemId = TestData.TaxableProductId,
                     Quantity = 1,
-                    Category = TaxCategory.TaxableProduct,
-                    ItemType = "Product"
                 }
             ]
         };
 
         // Act
-        var invoiceId = await _invoiceService.CreateInvoiceAsync(request);
+        var invoiceId = await SUT.CreateInvoiceAsync(request);
 
         // Assert
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(invoice);
         Assert.True(invoice.TotalTax > 0); // Should have tax applied
         Assert.Equal(14.00m, invoice.TotalTax); // 100 * 0.14 = 14.00
@@ -102,24 +94,21 @@ public class InvoiceApplicationServiceTests
             [
                 new CreateInvoiceItemRequest
                 {
-                    Description = "Consulting Service",
-                    ItemType = "Service",
-                    Category = TaxCategory.TaxableService,
-                    HourlyRate = 150.00m,
-                    Hours = 4.0m
+                    ItemId = TestData.TaxableServiceId, // $500.00
+                    Quantity = 4.0m
                 }
             ]
         };
 
         // Act
-        var invoiceId = await _invoiceService.CreateInvoiceAsync(request);
+        var invoiceId = await SUT.CreateInvoiceAsync(request);
 
         // Assert
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(invoice);
         Assert.Single(invoice.Items);
-        Assert.Equal(600.00m, invoice.Subtotal); // 150 * 4 = 600
-        Assert.Equal("Service", invoice.Items[0].ItemType);
+        Assert.Equal(2000.00m, invoice.Subtotal); // 500 * 4 = 2000
+        Assert.Equal(ItemType.Service, invoice.Items[0].ItemType);
     }
 
     [Fact]
@@ -129,7 +118,7 @@ public class InvoiceApplicationServiceTests
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _invoiceService.GetInvoiceAsync(nonExistentId);
+        var result = await SUT.GetInvoiceAsync(nonExistentId);
 
         // Assert
         Assert.Null(result);
@@ -142,21 +131,18 @@ public class InvoiceApplicationServiceTests
         var invoiceId = await CreateTestInvoice();
         var itemRequest = new CreateInvoiceItemRequest
         {
-            Description = "Additional Product",
-            UnitPrice = 50.00m,
+            ItemId = TestData.TaxableServiceId,
             Quantity = 1,
-            Category = TaxCategory.TaxableProduct,
-            ItemType = "Product"
         };
 
         // Act
-        await _invoiceService.AddInvoiceItemAsync(invoiceId, itemRequest);
+        await SUT.AddInvoiceItemAsync(invoiceId, itemRequest);
 
         // Assert
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(invoice);
         Assert.Equal(2, invoice.Items.Count);
-        Assert.Equal(150.00m, invoice.Subtotal); // Original 100 + new 50
+        Assert.Equal(600.00m, invoice.Subtotal); // Original 100 + new 500
     }
 
     [Fact]
@@ -166,14 +152,13 @@ public class InvoiceApplicationServiceTests
         var nonExistentId = Guid.NewGuid();
         var itemRequest = new CreateInvoiceItemRequest
         {
-            Description = "Test Product",
-            UnitPrice = 100.00m,
-            Category = TaxCategory.TaxableProduct
+            ItemId = TestData.TaxableProductId,
+            Quantity = 1,
         };
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _invoiceService.AddInvoiceItemAsync(nonExistentId, itemRequest));
+            SUT.AddInvoiceItemAsync(nonExistentId, itemRequest));
     }
 
     [Fact]
@@ -181,7 +166,7 @@ public class InvoiceApplicationServiceTests
     {
         // Arrange
         var invoiceId = await CreateTestInvoice();
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
 
         var paymentRequest = new CreatePaymentRequest
         {
@@ -194,12 +179,12 @@ public class InvoiceApplicationServiceTests
         };
 
         // Act
-        var paymentId = await _invoiceService.ProcessPaymentAsync(paymentRequest);
+        var paymentId = await SUT.ProcessPaymentAsync(paymentRequest);
 
         // Assert
         paymentId.ShouldNotBe(Guid.Empty);
 
-        var updatedInvoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var updatedInvoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(updatedInvoice);
         Assert.Single(updatedInvoice.Payments);
         Assert.Equal(PaymentStatus.Completed, updatedInvoice.Payments[0].Status);
@@ -220,7 +205,7 @@ public class InvoiceApplicationServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _invoiceService.ProcessPaymentAsync(paymentRequest));
+            SUT.ProcessPaymentAsync(paymentRequest));
     }
 
     [Fact]
@@ -228,7 +213,7 @@ public class InvoiceApplicationServiceTests
     {
         // Arrange
         var invoiceId = await CreateTestInvoiceWithPayment();
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
 
         var refundRequest = new CreateRefundRequest
         {
@@ -239,12 +224,12 @@ public class InvoiceApplicationServiceTests
         };
 
         // Act
-        var refundId = await _invoiceService.ProcessRefundAsync(refundRequest);
+        var refundId = await SUT.ProcessRefundAsync(refundRequest);
 
         // Assert
         refundId.ShouldNotBe(Guid.Empty);
 
-        var updatedInvoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var updatedInvoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(updatedInvoice);
         Assert.Single(updatedInvoice.Refunds);
         Assert.Equal(InvoiceStatus.PartiallyRefunded, updatedInvoice.Status);
@@ -256,7 +241,7 @@ public class InvoiceApplicationServiceTests
     {
         // Arrange
         var invoiceId = await CreateTestInvoice(); // No payments
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
 
         var refundRequest = new CreateRefundRequest
         {
@@ -267,7 +252,7 @@ public class InvoiceApplicationServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _invoiceService.ProcessRefundAsync(refundRequest));
+            SUT.ProcessRefundAsync(refundRequest));
     }
 
     [Fact]
@@ -275,22 +260,19 @@ public class InvoiceApplicationServiceTests
     {
         // Arrange & Act - Create invoice
         var invoiceId = await CreateTestInvoice();
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(invoice);
         Assert.Equal(InvoiceStatus.Draft, invoice.Status);
 
         // Add additional item
-        await _invoiceService.AddInvoiceItemAsync(invoiceId, new CreateInvoiceItemRequest
+        await SUT.AddInvoiceItemAsync(invoiceId, new CreateInvoiceItemRequest
         {
-            Description = "Additional Service",
-            ItemType = "Service",
-            Category = TaxCategory.TaxableService,
-            HourlyRate = 100.00m,
-            Hours = 2.0m
+            ItemId = TestData.TaxableServiceId,
+            Quantity = 2.0m
         });
 
         // Make partial payment
-        var partialPaymentId = await _invoiceService.ProcessPaymentAsync(new CreatePaymentRequest
+        var partialPaymentId = await SUT.ProcessPaymentAsync(new CreatePaymentRequest
         {
             InvoiceId = invoiceId,
             Amount = 150.00m, // Partial payment
@@ -299,10 +281,10 @@ public class InvoiceApplicationServiceTests
         });
 
         // Make remaining payment
-        invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        invoice = await SUT.GetInvoiceAsync(invoiceId);
         var remainingBalance = invoice!.Balance;
 
-        var finalPaymentId = await _invoiceService.ProcessPaymentAsync(new CreatePaymentRequest
+        var finalPaymentId = await SUT.ProcessPaymentAsync(new CreatePaymentRequest
         {
             InvoiceId = invoiceId,
             Amount = remainingBalance,
@@ -311,7 +293,7 @@ public class InvoiceApplicationServiceTests
         });
 
         // Process partial refund
-        var refundId = await _invoiceService.ProcessRefundAsync(new CreateRefundRequest
+        var refundId = await SUT.ProcessRefundAsync(new CreateRefundRequest
         {
             InvoiceId = invoiceId,
             Amount = 50.00m,
@@ -320,7 +302,7 @@ public class InvoiceApplicationServiceTests
         });
 
         // Assert final state
-        var finalInvoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var finalInvoice = await SUT.GetInvoiceAsync(invoiceId);
         Assert.NotNull(finalInvoice);
         Assert.Equal(2, finalInvoice.Items.Count);
         Assert.Equal(2, finalInvoice.Payments.Count);
@@ -330,6 +312,10 @@ public class InvoiceApplicationServiceTests
         Assert.Equal(50.00m, finalInvoice.Balance); // Should equal refund amount
     }
 
+    /// <summary>
+    /// Creates a test invoice with a single taxable item with a fixed price of $100.00.
+    /// </summary>
+    /// <returns></returns>
     private async Task<Guid> CreateTestInvoice()
     {
         var request = new CreateInvoiceRequest
@@ -342,24 +328,21 @@ public class InvoiceApplicationServiceTests
             [
                 new CreateInvoiceItemRequest
                 {
-                    Description = "Test Product",
-                    UnitPrice = 100.00m,
+                    ItemId = TestData.TaxableProductId,
                     Quantity = 1,
-                    Category = TaxCategory.TaxableProduct,
-                    ItemType = "Product"
                 }
             ]
         };
 
-        return await _invoiceService.CreateInvoiceAsync(request);
+        return await SUT.CreateInvoiceAsync(request);
     }
 
     private async Task<Guid> CreateTestInvoiceWithPayment()
     {
         var invoiceId = await CreateTestInvoice();
-        var invoice = await _invoiceService.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(invoiceId);
 
-        await _invoiceService.ProcessPaymentAsync(new CreatePaymentRequest
+        await SUT.ProcessPaymentAsync(new CreatePaymentRequest
         {
             InvoiceId = invoiceId,
             Amount = invoice!.Total,

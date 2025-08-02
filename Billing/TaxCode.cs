@@ -6,17 +6,19 @@ namespace Billing;
 /// </summary>
 public class TaxCode
 {
+    public static readonly TaxCode Empty = new();
+
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// Unique tax code identifier (e.g., "STD-GOODS", "ZR-GROCERY", "EX-HEALTH")
     /// </summary>
-    public string Code { get; set; } = string.Empty;
+    public String Code { get; set; } = String.Empty;
 
     /// <summary>
     /// Human-readable description of the tax code
     /// </summary>
-    public string Description { get; set; } = string.Empty;
+    public String Description { get; set; } = String.Empty;
 
     /// <summary>
     /// Tax treatment under Canadian GST/HST rules
@@ -39,19 +41,19 @@ public class TaxCode
     public DateOnly? ExpirationDate { get; set; }
 
     /// <summary>
-    /// Whether this tax code is currently active
+    /// Whether this tax code is active independent of its effective/expiration dates
     /// </summary>
     public bool IsActive { get; set; } = true;
 
     /// <summary>
     /// Additional notes or CRA reference information
     /// </summary>
-    public string Notes { get; set; } = string.Empty;
+    public String Notes { get; set; } = String.Empty;
 
     /// <summary>
     /// Reference to CRA documentation or ruling
     /// </summary>
-    public string CraReference { get; set; } = string.Empty;
+    public String CraReference { get; set; } = String.Empty;
 
     /// <summary>
     /// Determines if GST/HST should be calculated for this tax code
@@ -73,8 +75,7 @@ public class TaxCode
     /// </summary>
     public bool IsValidOn(DateOnly date)
     {
-        return IsActive 
-            && date >= EffectiveDate 
+        return date >= EffectiveDate
             && (ExpirationDate == null || date <= ExpirationDate.Value);
     }
 }

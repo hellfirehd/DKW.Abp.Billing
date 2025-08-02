@@ -6,24 +6,24 @@
 public class Payment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public decimal Amount { get; set; }
+    public Decimal Amount { get; set; }
     public IPaymentMethod Method { get; set; } = default!;
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public DateOnly PaymentDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-    public string ReferenceNumber { get; set; } = string.Empty;
-    public string Notes { get; set; } = string.Empty;
+    public String ReferenceNumber { get; set; } = String.Empty;
+    public String Notes { get; set; } = String.Empty;
 
     // For tracking gateway information
-    public string GatewayTransactionId { get; set; } = string.Empty;
-    public string GatewayName { get; set; } = string.Empty;
+    public String GatewayTransactionId { get; set; } = String.Empty;
+    public String GatewayName { get; set; } = String.Empty;
 
     /// <summary>
     /// Marks the payment as completed
     /// </summary>
-    public void MarkAsCompleted(string? transactionId = null)
+    public void MarkAsCompleted(String? transactionId = null)
     {
         Status = PaymentStatus.Completed;
-        if (!string.IsNullOrEmpty(transactionId))
+        if (!String.IsNullOrEmpty(transactionId))
         {
             GatewayTransactionId = transactionId;
         }
@@ -32,10 +32,10 @@ public class Payment
     /// <summary>
     /// Marks the payment as failed
     /// </summary>
-    public void MarkAsFailed(string reason = "")
+    public void MarkAsFailed(String reason = "")
     {
         Status = PaymentStatus.Failed;
-        if (!string.IsNullOrEmpty(reason))
+        if (!String.IsNullOrEmpty(reason))
         {
             Notes = reason;
         }
@@ -44,12 +44,12 @@ public class Payment
     /// <summary>
     /// Cancels the payment
     /// </summary>
-    public void Cancel(string reason = "")
+    public void Cancel(String reason = "")
     {
         if (Status == PaymentStatus.Pending)
         {
             Status = PaymentStatus.Cancelled;
-            if (!string.IsNullOrEmpty(reason))
+            if (!String.IsNullOrEmpty(reason))
             {
                 Notes = reason;
             }

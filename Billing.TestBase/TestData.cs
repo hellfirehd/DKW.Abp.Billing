@@ -1,28 +1,69 @@
 ﻿using Billing.Customers;
+using Billing.EntityFrameworkCore;
 using Bogus;
-using System.Text.RegularExpressions;
-using Volo.Abp.DependencyInjection;
 
 namespace Billing;
 
 /// <summary>
 /// Builder class for creating test data for billing system tests
 /// </summary>
-public partial class TestData : ITransientDependency
+public class TestData
 {
-    private static ProvinceManager PM { get; } = new ProvinceManager();
+    public static readonly DateOnly EffectiveDate = new(1970, 01, 01);
+
+    /// <summary>
+    /// Represents the unique identifier for a taxable product worth $100.00.
+    /// </summary>
+    public static readonly Guid TaxableProductId = Guid.NewGuid();
+
+    /// <summary>
+    /// Represents the unique identifier for a non-taxable <see cref="ItemCategory.BasicGroceries"/> product worth $50.00.
+    /// </summary>
+    public static readonly Guid NonTaxableProductId = Guid.NewGuid();
+
+    /// <summary>
+    /// Represents the unique identifier for a taxable service worth $500.00.
+    /// </summary>
+    public static readonly Guid TaxableServiceId = Guid.NewGuid();
+
+    /// <summary>
+    /// Represents the unique identifier for a taxable service worth $75.00.
+    /// </summary>
+    public static readonly Guid NonTaxableServiceId = Guid.NewGuid();
+
+    static TestData()
+    {
+        ProvinceManager = new ProvinceManager(new FakeProvinceRepository());
+        TaxCodeRepository = new FakeTaxCodeRepository();
+        TaxProvider = new CanadianTaxProvider(ProvinceManager, TimeProvider.System);
+        ItemRepository = new FakeItemRepository();
+        InvoiceItemManager = new InvoiceItemManager(ItemRepository, [new ProductInvoiceItemFactory(), new ServiceInvoiceItemFactory()]);
+        InvoiceManager = new InvoiceManager(ItemRepository, TaxCodeRepository, TaxProvider, ProvinceManager, InvoiceItemManager);
+
+        ItemRepository.AddItem(TaxableProduct(TestData.TaxableProductId));
+        ItemRepository.AddItem(NonTaxableProduct(TestData.NonTaxableProductId));
+        ItemRepository.AddItem(TaxableService(TestData.TaxableServiceId));
+        ItemRepository.AddItem(NonTaxableService(TestData.NonTaxableServiceId));
+    }
+
+    public static ITaxCodeRepository TaxCodeRepository { get; }
+    public static ITaxProvider TaxProvider { get; }
+    public static IItemRepository ItemRepository { get; }
+    public static ProvinceManager ProvinceManager { get; }
+    public static InvoiceManager InvoiceManager { get; }
+    public static InvoiceItemManager InvoiceItemManager { get; }
+    public static Province NovaScotia => ProvinceManager.GetProvince("NS");
+    public static Province BritishColumbia => ProvinceManager.GetProvince("BC");
+    public static Province Alberta => ProvinceManager.GetProvince("AB");
+    public static Province Ontario => ProvinceManager.GetProvince("ON");
 
     /// <summary>
     /// Creates a complete test scenario with invoice, items, taxes, and payments
     /// </summary>
-    public (Invoice invoice, List<ItemTaxRate> taxRates, List<Discount> discounts) BuildCompleteTestScenario()
+    public (Invoice invoice, IEnumerable<TaxRate> taxRates, IEnumerable<Discount> discounts) BuildCompleteTestScenario()
     {
         // Create tax rates for Nova Scotia
-        var taxRates = new List<ItemTaxRate>
-        {
-            new("BC-PST", TaxCategory.TaxableService, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue, 0.0875m)),
-            new("GST", TaxCategory.TaxableProduct, new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue,0.0875m))
-        };
+        var taxRates = TaxProvider.GetTaxRates(ProvinceManager.GetProvince("NS"));
 
         // Create discounts
         var discounts = new List<Discount>
@@ -49,50 +90,15 @@ public partial class TestData : ITransientDependency
         {
             InvoiceNumber = "INV-2024-001",
             Customer = Customer(),
-            Province = PM.GetProvince("NS"),
+            Province = ProvinceManager.GetProvince("NS"),
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             ShippingCost = 25.00m,
             ShippingMethod = "Express Shipping"
         };
 
-        // Add a taxable product
-        var product = new Product
-        {
-            Description = "Professional Software License",
-            UnitPrice = 299.99m,
-            Quantity = 3,
-            TaxCategory = TaxCategory.TaxableProduct,
-            SKU = "PSL-001",
-            Weight = 0m, // Digital product
-            Manufacturer = "Software Corp",
-            RequiresShipping = false
-        };
-
-        // Add a taxable service
-        var service = new Service
-        {
-            Description = "Implementation Consulting",
-            HourlyRate = 200.00m,
-            Hours = 8.0m,
-            TaxCategory = TaxCategory.TaxableService
-        };
-
-        // Add a non-taxable item
-        var nonTaxableProduct = new Product
-        {
-            Description = "Educational Material",
-            UnitPrice = 29.99m,
-            Quantity = 2,
-            TaxCategory = TaxCategory.NonTaxableProduct,
-            SKU = "EDU-001",
-            Weight = 0.5m,
-            Manufacturer = "Education Inc",
-            RequiresShipping = true
-        };
-
-        invoice.AddItem(product);
-        invoice.AddItem(service);
-        invoice.AddItem(nonTaxableProduct);
+        invoice.AddItem(CreateInvoiceItem(TestData.TaxableProductId, invoice.InvoiceDate, 1));
+        invoice.AddItem(CreateInvoiceItem(TestData.TaxableServiceId, invoice.InvoiceDate, 1));
+        invoice.AddItem(CreateInvoiceItem(TestData.NonTaxableProductId, invoice.InvoiceDate, 1));
 
         // Apply tax rates
         invoice.SetTaxRates(taxRates);
@@ -108,21 +114,12 @@ public partial class TestData : ITransientDependency
         var invoice = new Invoice
         {
             InvoiceNumber = "INV-SIMPLE-001",
-            Customer = Customer(PM.GetProvince("BC")),
-            Province = PM.GetProvince("BC"),
+            Customer = Customer(ProvinceManager.GetProvince("BC")),
+            Province = ProvinceManager.GetProvince("BC"),
             DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15))
         };
 
-        var product = new Product
-        {
-            Description = "Test Product",
-            UnitPrice = 100.00m,
-            Quantity = 1,
-            TaxCategory = TaxCategory.TaxableProduct,
-            SKU = "TEST-001"
-        };
-
-        invoice.AddItem(product);
+        invoice.AddItem(CreateInvoiceItem(TestData.TaxableProductId, invoice.InvoiceDate));
 
         return invoice;
     }
@@ -139,7 +136,7 @@ public partial class TestData : ITransientDependency
         .RuleFor(a => a.Line1, f => f.Address.StreetAddress())
         .RuleFor(a => a.Line2, f => f.Lorem.Word())
         .RuleFor(a => a.City, f => f.Address.City())
-        .RuleFor(a => a.Province, f => province is null ? f.PickRandom(PM.GetAllProvinces()) : province)
+        .RuleFor(a => a.Province, f => province is null ? f.PickRandom(ProvinceManager.GetAllProvinces()) : province)
         .RuleFor(a => a.PostalCode, f => f.Address.ZipCode())
         .RuleFor(a => a.Country, f => "Canada")
         .RuleFor(a => a.IsDefault, f => isDefault)
@@ -149,41 +146,45 @@ public partial class TestData : ITransientDependency
         .RuleFor(a => a.PhoneNumber, f => new PhoneNumber(f.Person.Phone));
 
     /// <summary>
-    /// Creates payment and refund test scenarios
+    /// Creates a taxable <see cref="ItemCategory.BooksAndMagazines"/> product worth $50.00.
     /// </summary>
-    public (Payment fullPayment, Payment partialPayment, Refund refund) BuildPaymentScenarios(decimal invoiceTotal)
+    public static Product TaxableProduct(Guid id) => Product.Create(id, "BOOK-001", "Test Product", ItemCategory.BooksAndMagazines).AddPrice(100.00m, EffectiveDate);
+
+    /// <summary>
+    /// Creates a non-taxable <see cref="ItemCategory.BasicGroceries"/> product worth $50.00.
+    /// </summary>
+    public static Product NonTaxableProduct(Guid id) => Product.Create(id, "BEEF-002", "Non-Taxable Product", ItemCategory.BasicGroceries).AddPrice(50.00m, EffectiveDate);
+
+    /// <summary>
+    /// Creates a taxable <see cref="ItemCategory.ProfessionalServices"/> service worth $500.00.
+    /// </summary>
+    public static Service TaxableService(Guid id) => Service.Create(id, "Consulting Service", "Provider A", ItemCategory.ProfessionalServices).AddPrice(500.00m, EffectiveDate);
+
+    /// <summary>
+    /// Creates a non-taxable <see cref="ItemCategory.EducationalServices"/> service worth $75.00.
+    /// </summary>
+    public static Service NonTaxableService(Guid id) => Service.Create(id, "Financial Advice", "Provider B", ItemCategory.EducationalServices).AddPrice(75.00m, EffectiveDate);
+
+    public static InvoiceItem CreateInvoiceItem(Guid itemId, DateOnly effectiveDate, Decimal quantity = 1.0m)
     {
-        var fullPayment = new Payment
-        {
-            Amount = invoiceTotal,
-            Method = PaymentMethod.CreditCard,
-            ReferenceNumber = "CC-FULL-001",
-            Notes = "Full payment via credit card",
-            GatewayTransactionId = "TXN-12345",
-            GatewayName = "Stripe"
-        };
-        fullPayment.MarkAsCompleted();
-
-        var partialPayment = new Payment
-        {
-            Amount = invoiceTotal * 0.5m, // 50% payment
-            Method = PaymentMethod.BankTransfer,
-            ReferenceNumber = "BT-PARTIAL-001",
-            Notes = "Partial payment via bank transfer"
-        };
-        partialPayment.MarkAsCompleted();
-
-        var refund = new Refund
-        {
-            Amount = invoiceTotal * 0.25m, // 25% refund
-            Reason = "Product returned",
-            ReferenceNumber = "REF-001",
-            Notes = "Customer returned one item"
-        };
-
-        return (fullPayment, partialPayment, refund);
+        return InvoiceItemManager.Create(itemId, effectiveDate, quantity);
     }
 
-    [GeneratedRegex(@"[^\d]")]
-    private static partial Regex NonNumeric();
+    public static InvoiceItem TaxableProductItem(DateOnly effectiveDate)
+    {
+        return CreateInvoiceItem(TestData.TaxableProductId, effectiveDate);
+    }
+
+    public static InvoiceItem NonTaxableProductItem(DateOnly effectiveDate)
+    {
+        return CreateInvoiceItem(TestData.NonTaxableProductId, effectiveDate);
+    }
+    public static InvoiceItem TaxableServiceItem(DateOnly effectiveDate)
+    {
+        return CreateInvoiceItem(TestData.TaxableServiceId, effectiveDate);
+    }
+    public static InvoiceItem NonTaxableServiceItem(DateOnly effectiveDate)
+    {
+        return CreateInvoiceItem(TestData.NonTaxableServiceId, effectiveDate);
+    }
 }

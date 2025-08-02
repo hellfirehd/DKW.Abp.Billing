@@ -1,7 +1,7 @@
 ﻿namespace Billing;
 
-public readonly struct EmailAddress(string email, string name)
+public readonly struct EmailAddress(String email, String name)
 {
-    public string Email { get; } = email;
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
+    public String Email { get; } = email;
+    public String Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
 }

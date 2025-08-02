@@ -3,7 +3,7 @@
 public abstract class PaymentMethod : IPaymentMethod
 {
     public abstract PaymentType PaymentType { get; }
-    public string Details { get; set; } = String.Empty; // e.g., card number, bank account number, etc.
+    public String Details { get; set; } = String.Empty; // e.g., card number, bank account number, etc.
 
     public static readonly IPaymentMethod BankTransfer = new BankTransferPaymentMethod();
     public static readonly IPaymentMethod CreditCard = new CreditCardPaymentMethod();
@@ -18,8 +18,8 @@ public class CreditCardPaymentMethod : PaymentMethod
 {
     public override PaymentType PaymentType => PaymentType.CreditCard;
 
-    public string CardNumber { get; set; } = string.Empty;
-    public string ExpiryDate { get; set; } = string.Empty; // Format: MM/YY
-    public string CardHolderName { get; set; } = string.Empty;
-    public string Cvv { get; set; } = string.Empty;
+    public String CardNumber { get; set; } = String.Empty;
+    public String ExpiryDate { get; set; } = String.Empty; // Format: MM/YY
+    public String CardHolderName { get; set; } = String.Empty;
+    public String Cvv { get; set; } = String.Empty;
 }

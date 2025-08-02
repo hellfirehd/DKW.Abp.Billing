@@ -28,17 +28,17 @@ public interface IInvoiceApplicationService
     /// <summary>
     /// Removes an item from an invoice
     /// </summary>
-    Task RemoveInvoiceItemAsync(Guid invoiceId, string itemId);
+    Task RemoveInvoiceItemAsync(Guid invoiceId, String itemId);
 
     /// <summary>
     /// Applies discounts to an invoice
     /// </summary>
-    Task ApplyDiscountsAsync(Guid invoiceId, List<string> discountIds);
+    Task ApplyDiscountsAsync(Guid invoiceId, List<String> discountIds);
 
     /// <summary>
     /// Applies surcharges to an invoice
     /// </summary>
-    Task ApplySurchargesAsync(Guid invoiceId, List<string> surchargeIds);
+    Task ApplySurchargesAsync(Guid invoiceId, List<String> surchargeIds);
 
     /// <summary>
     /// Sets tax rates for an invoice based on state and item categories
@@ -70,6 +70,6 @@ public interface IInvoiceApplicationService
     /// </summary>
     Task<List<InvoiceResponse>> GetInvoicesAsync(InvoiceFilter? filter = null);
 
-    Task MoveItemUp(Guid invoiceId, string itemId);
-    Task MoveItemDown(Guid invoiceId, string itemId);
+    Task MoveItemUp(Guid invoiceId, String itemId);
+    Task MoveItemDown(Guid invoiceId, String itemId);
 }

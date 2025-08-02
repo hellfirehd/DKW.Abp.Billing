@@ -3,4 +3,5 @@
 /// <summary>
 /// Represents a tax rate for a specific item category
 /// </summary>
-public record ItemTaxRate(string Code, TaxCategory TaxCategory, TaxRate TaxRate);
+[Obsolete("Use ItemClassification instead")]
+public record ItemTaxRate(String Code, TaxCode TaxCode, TaxRate TaxRate);

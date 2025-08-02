@@ -3,14 +3,14 @@
 // Request/Response DTOs
 public class CreateInvoiceRequest
 {
-    public string InvoiceNumber { get; set; } = string.Empty;
+    public String InvoiceNumber { get; set; } = String.Empty;
     public DateOnly? DueDate { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
-    public string CustomerEmail { get; set; } = string.Empty;
-    public string BillingAddress { get; set; } = string.Empty;
-    public string ShippingAddress { get; set; } = string.Empty;
+    public String CustomerName { get; set; } = String.Empty;
+    public String CustomerEmail { get; set; } = String.Empty;
+    public String BillingAddress { get; set; } = String.Empty;
+    public String ShippingAddress { get; set; } = String.Empty;
     public Province State { get; set; } = Province.Empty;
     public List<CreateInvoiceItemRequest> Items { get; set; } = [];
-    public decimal ShippingCost { get; set; }
-    public string ShippingMethod { get; set; } = string.Empty;
+    public Decimal ShippingCost { get; set; }
+    public String ShippingMethod { get; set; } = String.Empty;
 }

@@ -2,13 +2,13 @@
 
 public class Address // Value Object
 {
-    public string Name { get; set; } = string.Empty;
-    public string Line1 { get; set; } = string.Empty;
-    public string Line2 { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
+    public String Name { get; set; } = String.Empty;
+    public String Line1 { get; set; } = String.Empty;
+    public String Line2 { get; set; } = String.Empty;
+    public String City { get; set; } = String.Empty;
     public Province Province { get; set; } = Province.Empty;
-    public string PostalCode { get; set; } = string.Empty;
-    public string Country { get; set; } = string.Empty;
+    public String PostalCode { get; set; } = String.Empty;
+    public String Country { get; set; } = String.Empty;
 
     public PhoneNumber PhoneNumber { get; set; } = PhoneNumber.Empty;
 

@@ -29,9 +29,9 @@ public class EnumTests
         Assert.True(Enum.IsDefined(ItemCategory.FinancialServices));
 
         // Verify numeric values for organization
-        Assert.Equal(100, (int)ItemCategory.GeneralGoods); // Goods start at 100
-        Assert.Equal(200, (int)ItemCategory.GeneralServices); // Services start at 200
-        Assert.Equal(300, (int)ItemCategory.Exports); // Special categories start at 300
+        Assert.Equal(100, (Int32)ItemCategory.GeneralGoods); // Goods start at 100
+        Assert.Equal(200, (Int32)ItemCategory.GeneralServices); // Services start at 200
+        Assert.Equal(300, (Int32)ItemCategory.Exports); // Special categories start at 300
     }
 
     [Fact]
@@ -44,9 +44,9 @@ public class EnumTests
         Assert.True(Enum.IsDefined(TaxTreatment.OutOfScope));
 
         // Verify expected numeric values
-        Assert.Equal(0, (int)TaxTreatment.Standard);
-        Assert.Equal(1, (int)TaxTreatment.ZeroRated);
-        Assert.Equal(2, (int)TaxTreatment.Exempt);
-        Assert.Equal(3, (int)TaxTreatment.OutOfScope);
+        Assert.Equal(0, (Int32)TaxTreatment.Standard);
+        Assert.Equal(1, (Int32)TaxTreatment.ZeroRated);
+        Assert.Equal(2, (Int32)TaxTreatment.Exempt);
+        Assert.Equal(3, (Int32)TaxTreatment.OutOfScope);
     }
 }

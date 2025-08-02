@@ -3,7 +3,7 @@
 public class Customer
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public String Name { get; set; } = String.Empty;
     public Email EmailAddresses { get; set; } = Email.Empty;
     public List<Address> Addresses { get; set; } = [];
     public List<PaymentMethod> PaymentMethods { get; set; } = [];

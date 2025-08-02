@@ -10,7 +10,7 @@ public class CustomerTaxProfile
     /// <summary>
     /// Customer identifier
     /// </summary>
-    public string CustomerId { get; set; } = string.Empty;
+    public String CustomerId { get; set; } = String.Empty;
 
     /// <summary>
     /// Customer's tax status
@@ -20,12 +20,12 @@ public class CustomerTaxProfile
     /// <summary>
     /// GST/HST registration number (if applicable)
     /// </summary>
-    public string GstHstNumber { get; set; } = string.Empty;
+    public String GstHstNumber { get; set; } = String.Empty;
 
     /// <summary>
     /// Tax exemption certificate number (if applicable)
     /// </summary>
-    public string ExemptionCertificateNumber { get; set; } = string.Empty;
+    public String ExemptionCertificateNumber { get; set; } = String.Empty;
 
     /// <summary>
     /// Province where customer is located for tax purposes
@@ -50,21 +50,15 @@ public class CustomerTaxProfile
     /// <summary>
     /// Additional notes about customer's tax status
     /// </summary>
-    public string Notes { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Whether this profile is currently active
-    /// </summary>
-    public bool IsActive { get; set; } = true;
+    public String Notes { get; set; } = String.Empty;
 
     /// <summary>
     /// Checks if customer qualifies for tax exemption on a specific date
     /// </summary>
-    public bool QualifiesForExemption(DateOnly date)
+    public virtual bool QualifiesForExemption(DateOnly date)
     {
-        return IsActive 
-            && IsEligibleForExemption
-            && date >= EffectiveDate 
+        return IsEligibleForExemption
+            && date >= EffectiveDate
             && (ExpirationDate == null || date <= ExpirationDate.Value);
     }
 }

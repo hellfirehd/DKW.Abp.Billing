@@ -6,33 +6,34 @@
 public class Refund
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public decimal Amount { get; set; }
+    public Decimal Amount { get; set; }
     public DateOnly RefundDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-    public string Reason { get; set; } = string.Empty;
-    public string ReferenceNumber { get; set; } = string.Empty;
-    public string Notes { get; set; } = string.Empty;
+    public String Reason { get; set; } = String.Empty;
+    public String ReferenceNumber { get; set; } = String.Empty;
+    public String Notes { get; set; } = String.Empty;
 
     // Link to original payment if applicable
-    public string? OriginalPaymentId { get; set; }
+    public String? OriginalPaymentId { get; set; }
 
     // For tracking gateway information
-    public string GatewayTransactionId { get; set; } = string.Empty;
-    public string GatewayName { get; set; } = string.Empty;
+    public String GatewayTransactionId { get; set; } = String.Empty;
+    public String GatewayName { get; set; } = String.Empty;
 
     // Breakdown of what was refunded (proportional tax/discount adjustment)
-    public decimal SubtotalRefund { get; set; }
-    public decimal TaxRefund { get; set; }
-    public decimal ShippingRefund { get; set; }
-    // Note: Surcharges are typically not refundable
+    public Decimal SubtotalRefund { get; set; }
+    public Decimal TaxRefund { get; set; }
+    public Decimal ShippingRefund { get; set; }
+
+    // Note: Currently, surcharges are not refundable
 
     /// <summary>
     /// Creates a refund with proper breakdown based on invoice totals
     /// </summary>
     public static Refund CreateProportionalRefund(
         Invoice invoice,
-        decimal refundAmount,
-        string reason,
-        string? originalPaymentId = null)
+        Decimal refundAmount,
+        String reason,
+        String? originalPaymentId = null)
     {
         if (refundAmount <= 0)
         {

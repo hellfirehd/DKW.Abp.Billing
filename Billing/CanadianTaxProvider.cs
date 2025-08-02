@@ -6,152 +6,99 @@
 /// </summary>
 public class CanadianTaxProvider : ITaxProvider
 {
-    private readonly ProvinceManager manager = new();
+    private readonly ProvinceManager _manager;
 
     private sealed record ProvinceTax(Province Province, Tax Tax);
 
     private readonly ProvinceTax[] _taxMap;
 
-    public CanadianTaxProvider()
+    protected TimeProvider TimeProvider { get; }
+
+    public CanadianTaxProvider(ProvinceManager provinceManager, TimeProvider timeProvider)
     {
-        var gst = new Tax("GST", "GST", TaxScope.Federal,
-        [
-            new TaxRate(new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1), 0.07M),
-            new TaxRate(new DateOnly(2006, 7, 1), new DateOnly(2008, 1, 1), 0.06M),
-            new TaxRate(new DateOnly(2008, 1, 1), DateOnly.MaxValue, 0.05M)
-        ]);
+        _manager = provinceManager ?? throw new ArgumentNullException(nameof(provinceManager));
 
-        var bcpst = new Tax("BC-PST", "PST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2013, 4, 1), DateOnly.MaxValue, 0.07M)]);
+        var gst = new Tax("GST", "GST")
+            .AddTaxRate(0.05M, new DateOnly(2008, 1, 1), DateOnly.MaxValue)
+            .AddTaxRate(0.06M, new DateOnly(2006, 7, 1), new DateOnly(2008, 1, 1))
+            .AddTaxRate(0.07M, new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1));
 
-        var mbrst = new Tax("MB-PST", "RST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2019, 7, 1), DateOnly.MaxValue, 0.07M)]);
+        var bcpst = new Tax("BC-PST", "PST")
+            .AddTaxRate(0.07M, new DateOnly(2013, 4, 1), DateOnly.MaxValue);
 
-        var nbhst = new Tax("NB-HST", "HST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2016, 7, 1), DateOnly.MaxValue, 0.15M)]);
+        var mbrst = new Tax("MB-PST", "RST")
+            .AddTaxRate(0.07M, new DateOnly(2019, 7, 1), DateOnly.MaxValue);
 
-        var nlhst = new Tax("NL-HST", "HST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2016, 7, 1), DateOnly.MaxValue, 0.15M)]);
+        var nbhst = new Tax("NB-HST", "HST")
+            .AddTaxRate(0.15M, new DateOnly(2016, 7, 1), DateOnly.MaxValue);
 
-        var nshst = new Tax("NS-HST", "HST", TaxScope.Provincial,
-        [
-            new TaxRate(new DateOnly(2010, 7, 1), new DateOnly(2025, 4, 1), 0.15M),
-            new TaxRate(new DateOnly(2025, 4, 1), DateOnly.MaxValue, 0.14M)
-        ]);
+        var nlhst = new Tax("NL-HST", "HST")
+            .AddTaxRate(0.15M, new DateOnly(2016, 7, 1), DateOnly.MaxValue);
 
-        var onhst = new Tax("ON-HST", "HST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2010, 7, 1), DateOnly.MaxValue, 0.13M)]);
+        var nshst = new Tax("NS-HST", "HST")
+            .AddTaxRate(0.15M, new DateOnly(2010, 7, 1), new DateOnly(2025, 4, 1))
+            .AddTaxRate(0.14M, new DateOnly(2025, 4, 1), DateOnly.MaxValue);
 
-        var pehst = new Tax("PE-HST", "HST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2016, 10, 1), DateOnly.MaxValue, 0.15M)]);
+        var onhst = new Tax("ON-HST", "HST")
+            .AddTaxRate(0.13M, new DateOnly(2010, 7, 1), DateOnly.MaxValue);
 
-        var qcqst = new Tax("QC-QST", "QST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2013, 1, 1), DateOnly.MaxValue, 0.09975M)]);
+        var pehst = new Tax("PE-HST", "HST")
+            .AddTaxRate(0.15M, new DateOnly(2016, 10, 1), DateOnly.MaxValue);
 
-        var skpst = new Tax("SK-PST", "PST", TaxScope.Provincial,
-            [new TaxRate(new DateOnly(2017, 3, 23), DateOnly.MaxValue, 0.06M)]);
+        var qcqst = new Tax("QC-QST", "QST")
+            .AddTaxRate(0.09975M, new DateOnly(2013, 1, 1), DateOnly.MaxValue);
+
+        var skpst = new Tax("SK-PST", "PST")
+            .AddTaxRate(0.06M, new DateOnly(2017, 3, 23), DateOnly.MaxValue);
 
         _taxMap = [
-            new ProvinceTax(manager.GetProvince("AB"), gst),
+            new ProvinceTax(_manager.GetProvince("AB"), gst),
 
-            new ProvinceTax(manager.GetProvince("BC"), gst),
-            new ProvinceTax(manager.GetProvince("BC"), bcpst),
+            new ProvinceTax(_manager.GetProvince("BC"), gst),
+            new ProvinceTax(_manager.GetProvince("BC"), bcpst),
 
-            new ProvinceTax(manager.GetProvince("MB"), gst),
-            new ProvinceTax(manager.GetProvince("MB"), mbrst),
+            new ProvinceTax(_manager.GetProvince("MB"), gst),
+            new ProvinceTax(_manager.GetProvince("MB"), mbrst),
 
-            new ProvinceTax(manager.GetProvince("NB"), nbhst),
+            new ProvinceTax(_manager.GetProvince("NB"), nbhst),
 
-            new ProvinceTax(manager.GetProvince("NL"), nlhst),
+            new ProvinceTax(_manager.GetProvince("NL"), nlhst),
 
-            new ProvinceTax(manager.GetProvince("NS"), nshst),
+            new ProvinceTax(_manager.GetProvince("NS"), nshst),
 
-            new ProvinceTax(manager.GetProvince("ON"), onhst),
+            new ProvinceTax(_manager.GetProvince("ON"), onhst),
 
-            new ProvinceTax(manager.GetProvince("PE"), pehst),
+            new ProvinceTax(_manager.GetProvince("PE"), pehst),
 
-            new ProvinceTax(manager.GetProvince("QC"), gst),
-            new ProvinceTax(manager.GetProvince("QC"), qcqst),
+            new ProvinceTax(_manager.GetProvince("QC"), gst),
+            new ProvinceTax(_manager.GetProvince("QC"), qcqst),
 
-            new ProvinceTax(manager.GetProvince("SK"), gst),
-            new ProvinceTax(manager.GetProvince("SK"), skpst),
+            new ProvinceTax(_manager.GetProvince("SK"), gst),
+            new ProvinceTax(_manager.GetProvince("SK"), skpst),
 
-            new ProvinceTax(manager.GetProvince("NT"), gst),
+            new ProvinceTax(_manager.GetProvince("NT"), gst),
 
-            new ProvinceTax(manager.GetProvince("NU"), gst),
+            new ProvinceTax(_manager.GetProvince("NU"), gst),
 
-            new ProvinceTax(manager.GetProvince("YT"), gst),
+            new ProvinceTax(_manager.GetProvince("YT"), gst),
         ];
+        TimeProvider = timeProvider;
     }
 
     /// <summary>
     /// Gets applicable tax rates for a province and date, with category filtering
     /// </summary>
-    public ItemTaxRate[] GetTaxRates(Province province, DateOnly effectiveDate)
+    public IEnumerable<TaxRate> GetTaxRates(Province province, DateOnly? effectiveDate = null)
     {
-        var rates = new List<ItemTaxRate>();
+        var date = effectiveDate ?? DateOnly.FromDateTime(TimeProvider.GetUtcNow().DateTime);
 
         foreach (var map in _taxMap.Where(m => m.Province == province))
         {
-            var rate = map.Tax.TaxRate(effectiveDate);
+            var rate = map.Tax.GetTaxRate(date);
             if (rate is not null)
             {
-                rates.Add(new ItemTaxRate(map.Tax.Code, TaxCategory.TaxableProduct, rate));
+                yield return rate;
             }
         }
-
-        return [.. rates];
-    }
-
-    /// <summary>
-    /// Gets tax rates filtered by tax category
-    /// </summary>
-    public ItemTaxRate[] GetTaxRatesForCategory(Province province, DateOnly effectiveDate, TaxCategory taxCategory)
-    {
-        var allRates = GetTaxRates(province, effectiveDate);
-
-        return taxCategory switch
-        {
-            TaxCategory.NonTaxableProduct or TaxCategory.NonTaxableService => [],
-            TaxCategory.TaxableProduct => allRates.Where(r => IsApplicableToGoods(r.Code)).ToArray(),
-            TaxCategory.TaxableService => allRates.Where(r => IsApplicableToServices(r.Code)).ToArray(),
-            TaxCategory.DigitalProduct => allRates.Where(r => IsApplicableToGoods(r.Code)).ToArray(),
-            TaxCategory.Shipping => allRates.Where(r => IsApplicableToServices(r.Code)).ToArray(),
-            _ => allRates
-        };
-    }
-
-    /// <summary>
-    /// Determines if a tax applies to goods based on tax code
-    /// </summary>
-    private static bool IsApplicableToGoods(string taxCode)
-    {
-        // GST applies to all goods, HST replaces both GST and PST
-        return taxCode == "GST" || taxCode.Contains("HST");
-    }
-
-    /// <summary>
-    /// Determines if a tax applies to services based on tax code
-    /// </summary>
-    private static bool IsApplicableToServices(string taxCode)
-    {
-        // All taxes apply to services in Canada
-        return true;
-    }
-
-    /// <summary>
-    /// Validates if a province has tax configuration
-    /// </summary>
-    public Boolean HasTaxConfiguration(Province province)
-    {
-        return _taxMap.Any(m => m.Province == province);
-    }
-
-    /// <summary>
-    /// Gets all supported provinces
-    /// </summary>
-    public Province[] GetSupportedProvinces()
-    {
-        return _taxMap.Select(m => m.Province).Distinct().ToArray();
     }
 }

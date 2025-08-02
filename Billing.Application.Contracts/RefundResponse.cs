@@ -3,9 +3,9 @@
 public class RefundResponse
 {
     public Guid Id { get; set; }
-    public decimal Amount { get; set; }
+    public Decimal Amount { get; set; }
     public DateOnly RefundDate { get; set; }
-    public string Reason { get; set; } = string.Empty;
-    public string ReferenceNumber { get; set; } = string.Empty;
-    public string? OriginalPaymentId { get; set; }
+    public String Reason { get; set; } = String.Empty;
+    public String ReferenceNumber { get; set; } = String.Empty;
+    public String? OriginalPaymentId { get; set; }
 }

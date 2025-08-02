@@ -8,6 +8,8 @@ namespace Billing;
 // ToDo: This should be data from a database or configuration file
 public enum ItemCategory
 {
+    None = 0,
+
     // Goods Categories
     [Description("General Goods")]
     GeneralGoods = 100,
@@ -35,6 +37,9 @@ public enum ItemCategory
 
     [Description("Digital Products")]
     DigitalProducts = 108,
+
+    [Description("Office Supplies")]
+    OfficeSupplies = 109,
 
     // Services Categories
     [Description("General Services")]
@@ -72,5 +77,5 @@ public enum ItemCategory
     Imports = 301,
 
     [Description("Real Property")]
-    RealProperty = 302
+    RealProperty = 302,
 }

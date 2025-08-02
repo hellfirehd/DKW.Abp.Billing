@@ -2,13 +2,13 @@
 
 public class UpdateInvoiceRequest
 {
-    public string? InvoiceNumber { get; set; }
+    public String? InvoiceNumber { get; set; }
     public DateOnly? DueDate { get; set; }
-    public string? CustomerName { get; set; }
-    public string? CustomerEmail { get; set; }
-    public string? BillingAddress { get; set; }
-    public string? ShippingAddress { get; set; }
-    public string? State { get; set; }
-    public decimal? ShippingCost { get; set; }
-    public string? ShippingMethod { get; set; }
+    public String? CustomerName { get; set; }
+    public String? CustomerEmail { get; set; }
+    public String? BillingAddress { get; set; }
+    public String? ShippingAddress { get; set; }
+    public String? State { get; set; }
+    public Decimal? ShippingCost { get; set; }
+    public String? ShippingMethod { get; set; }
 }

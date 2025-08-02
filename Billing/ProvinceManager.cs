@@ -1,12 +1,11 @@
-﻿using Billing.EntityFrameworkCore;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Billing;
 
-public partial class ProvinceManager
+public partial class ProvinceManager(IProvinceRepository repository)
 {
-    private readonly ProvinceRepository _repository = new();
+    private readonly IProvinceRepository _repository = repository;
 
     public Province GetProvince(String? code)
     {

@@ -3,14 +3,16 @@
 /// <summary>
 /// Application service for invoice operations
 /// </summary>
-public class InvoiceApplicationService : IInvoiceApplicationService
+public class InvoiceApplicationService(InvoiceItemManager invoiceItemManager, ITaxProvider taxProvider) : IInvoiceApplicationService
 {
     // ToDo: Inject repositories for persistence
     private readonly Dictionary<Guid, Invoice> _invoices = [];
+    private readonly Dictionary<Guid, Item> _items = [];
     private readonly Dictionary<Guid, Discount> _discounts = [];
     private readonly Dictionary<Guid, Surcharge> _surcharges = [];
 
-    private readonly ITaxProvider _taxProvider = new CanadianTaxProvider();
+    private readonly InvoiceItemManager _invoiceItemManager = invoiceItemManager;
+    private readonly ITaxProvider _taxProvider = taxProvider;
 
     /// <summary>
     /// Creates a new invoice
@@ -30,7 +32,7 @@ public class InvoiceApplicationService : IInvoiceApplicationService
         // Add items
         foreach (var itemRequest in request.Items)
         {
-            var item = CreateInvoiceItem(itemRequest);
+            var item = CreateInvoiceItem(invoice, itemRequest);
             invoice.AddItem(item);
         }
 
@@ -71,23 +73,23 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             throw new ArgumentException($"Invoice {invoiceId} not found");
         }
 
-        var item = CreateInvoiceItem(request);
+        var item = CreateInvoiceItem(invoice, request);
         invoice.AddItem(item);
 
         return Task.CompletedTask;
     }
 
-    public Task RemoveInvoiceItemAsync(Guid invoiceId, string itemId)
+    public Task RemoveInvoiceItemAsync(Guid invoiceId, String itemId)
     {
         throw new NotImplementedException();
     }
 
-    public Task ApplyDiscountsAsync(Guid invoiceId, List<string> discountIds)
+    public Task ApplyDiscountsAsync(Guid invoiceId, List<String> discountIds)
     {
         throw new NotImplementedException();
     }
 
-    public Task ApplySurchargesAsync(Guid invoiceId, List<string> surchargeIds)
+    public Task ApplySurchargesAsync(Guid invoiceId, List<String> surchargeIds)
     {
         throw new NotImplementedException();
     }
@@ -123,8 +125,8 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             Method = request.Method,
             ReferenceNumber = request.ReferenceNumber,
             Notes = request.Notes,
-            GatewayTransactionId = request.GatewayTransactionId ?? string.Empty,
-            GatewayName = request.GatewayName ?? string.Empty
+            GatewayTransactionId = request.GatewayTransactionId ?? String.Empty,
+            GatewayName = request.GatewayName ?? String.Empty
         };
 
         // For demo purposes, mark as completed immediately
@@ -151,12 +153,12 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             request.Reason,
             request.OriginalPaymentId);
 
-        if (!string.IsNullOrEmpty(request.ReferenceNumber))
+        if (!String.IsNullOrEmpty(request.ReferenceNumber))
         {
             refund.ReferenceNumber = request.ReferenceNumber;
         }
 
-        if (!string.IsNullOrEmpty(request.Notes))
+        if (!String.IsNullOrEmpty(request.Notes))
         {
             refund.Notes = request.Notes;
         }
@@ -187,41 +189,19 @@ public class InvoiceApplicationService : IInvoiceApplicationService
         throw new NotImplementedException();
     }
 
-    public Task MoveItemUp(Guid invoiceId, string itemId)
+    public Task MoveItemUp(Guid invoiceId, String itemId)
     {
         throw new NotImplementedException();
     }
 
-    public Task MoveItemDown(Guid invoiceId, string itemId)
+    public Task MoveItemDown(Guid invoiceId, String itemId)
     {
         throw new NotImplementedException();
     }
 
-    private static InvoiceItem CreateInvoiceItem(CreateInvoiceItemRequest request)
+    private InvoiceItem CreateInvoiceItem(Invoice invoice, CreateInvoiceItemRequest request)
     {
-        InvoiceItem item = request.ItemType.ToLower() switch
-        {
-            "service" => new Service
-            {
-                Description = request.Description,
-                HourlyRate = request.HourlyRate ?? 0,
-                Hours = request.Hours ?? 1,
-                TaxCategory = request.Category
-            },
-            "product" or _ => new Product
-            {
-                Description = request.Description,
-                UnitPrice = request.UnitPrice,
-                Quantity = request.Quantity,
-                TaxCategory = request.Category,
-                SKU = request.SKU ?? string.Empty,
-                Weight = request.Weight ?? 0,
-                Manufacturer = request.Manufacturer ?? string.Empty,
-                RequiresShipping = request.RequiresShipping
-            }
-        };
-
-        return item;
+        return _invoiceItemManager.Create(request.ItemId, invoice.InvoiceDate, request.Quantity);
     }
 
     private InvoiceResponse MapToInvoiceResponse(Invoice invoice)
@@ -258,11 +238,10 @@ public class InvoiceApplicationService : IInvoiceApplicationService
             UnitPrice = item.UnitPrice,
             Quantity = item.Quantity,
             Subtotal = item.GetSubtotal(),
-            TotalTax = item.GetTotalTax(),
-            TotalDiscount = item.GetTotalDiscount(),
+            TotalTax = item.GetTaxTotal(),
+            TotalDiscount = item.GetDiscountTotal(),
             Total = item.GetTotal(),
-            Category = item.TaxCategory,
-            ItemType = item.GetType().Name
+            ItemType = item.ItemType
         };
     }
 

@@ -5,7 +5,7 @@ namespace Billing;
 /// </summary>
 public class ItemClassification
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public required Guid Id { get; set; }
 
     /// <summary>
     /// Reference to the item (Product or Service)
@@ -15,12 +15,12 @@ public class ItemClassification
     /// <summary>
     /// The tax code assigned to this item
     /// </summary>
-    public string TaxCode { get; set; } = string.Empty;
+    public String TaxCode { get; set; } = String.Empty;
 
     /// <summary>
     /// When this classification was assigned
     /// </summary>
-    public DateOnly AssignedDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly AssignedDate { get; set; }
 
     /// <summary>
     /// When this classification expires (if applicable)
@@ -30,25 +30,19 @@ public class ItemClassification
     /// <summary>
     /// Who assigned this classification
     /// </summary>
-    public string AssignedBy { get; set; } = string.Empty;
+    public String AssignedBy { get; set; } = String.Empty;
 
     /// <summary>
     /// Additional notes about why this classification was chosen
     /// </summary>
-    public string Notes { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Whether this classification is currently active
-    /// </summary>
-    public bool IsActive { get; set; } = true;
+    public String Notes { get; set; } = String.Empty;
 
     /// <summary>
     /// Checks if this classification is valid for a specific date
     /// </summary>
     public bool IsValidOn(DateOnly date)
     {
-        return IsActive 
-            && date >= AssignedDate 
+        return date >= AssignedDate
             && (ExpirationDate == null || date <= ExpirationDate.Value);
     }
 }

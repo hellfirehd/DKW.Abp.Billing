@@ -8,6 +8,6 @@ namespace Billing;
 public class TaxProfile
 {
     public RecipientStatus RecipientStatus { get; set; } = RecipientStatus.Regular;
-    public string GstHstNumber { get; set; } = string.Empty;
-    public string ExemptionCertificateNumber { get; set; } = string.Empty;
+    public String GstHstNumber { get; set; } = String.Empty;
+    public String ExemptionCertificateNumber { get; set; } = String.Empty;
 }

@@ -3,34 +3,34 @@ namespace Billing;
 /// <summary>
 /// Represents a service that can be sold
 /// </summary>
-public class Service : InvoiceItem
+public class Service : Item<Service>
 {
-    public decimal HourlyRate 
-    { 
-        get => UnitPrice; 
-        set => UnitPrice = value; 
+    public static Service Create(Guid id, String serviceType, String providerName, ItemCategory itemCategory)
+    {
+        return new Service()
+        {
+            Id = id,
+            ServiceType = serviceType,
+            ProviderName = providerName,
+            ItemCategory = itemCategory
+        };
     }
-    
-    public decimal Hours 
-    { 
-        get => Quantity; 
-        set => Quantity = (int)Math.Round(value, 2);
-    }
-    
-    public string ServiceType { get; set; } = string.Empty;
-    public string ProviderName { get; set; } = string.Empty;
-    public DateOnly? ServiceDate { get; set; }
-    public TimeSpan? Duration { get; set; }
-    
+
     public Service()
     {
         UnitType = "Hour";
-        TaxCategory = TaxCategory.TaxableService;
     }
-    
-    /// <summary>
-    /// Gets the subtotal for service (rate * hours)
-    /// </summary>
-    public override decimal GetSubtotal() => HourlyRate * Hours;
+
+    public override ItemType ItemType => ItemType.Service;
+    public String ServiceType { get; set; } = String.Empty;
+    public String ProviderName { get; set; } = String.Empty;
+    public DateOnly? ServiceDate { get; set; }
+    public TimeSpan? Duration { get; set; }
 }
 
+public class ServiceInvoiceItemFactory : InvoiceItemFactory<Service>
+{
+    protected override void SetProperties(Service item, ref InvoiceItem invoiceItem)
+    {
+    }
+}

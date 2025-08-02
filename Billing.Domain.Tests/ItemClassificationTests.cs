@@ -9,10 +9,12 @@ public class ItemClassificationTests
         var itemId = Guid.NewGuid();
         var classification = new ItemClassification
         {
+            Id = Guid.NewGuid(),
             ItemId = itemId,
             TaxCode = "ZR-GROCERY",
             AssignedBy = "Tax Administrator",
-            Notes = "Basic grocery item classification"
+            Notes = "Basic grocery item classification",
+            AssignedDate = DateOnly.FromDateTime(DateTime.UtcNow)
         };
 
         // Act & Assert

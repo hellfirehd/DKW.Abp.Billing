@@ -1,8 +1,8 @@
 ﻿namespace Billing.EntityFrameworkCore;
 
-public class ProvinceRepository : IProvinceRepository
+public class FakeProvinceRepository : IProvinceRepository
 {
-    private readonly Dictionary<string, Province> _provinces = new(StringComparer.OrdinalIgnoreCase)
+    private readonly Dictionary<String, Province> _provinces = new(StringComparer.OrdinalIgnoreCase)
     {
         { "AB", AB },
         { "BC", BC },
@@ -19,7 +19,7 @@ public class ProvinceRepository : IProvinceRepository
         { "YT", YT }
     };
 
-    public Province GetProvince(string code)
+    public Province GetProvince(String code)
     {
         if (String.IsNullOrWhiteSpace(code))
         {
@@ -31,7 +31,7 @@ public class ProvinceRepository : IProvinceRepository
             : Province.Empty;
     }
 
-    public IEnumerable<string> Codes() => _provinces.Keys;
+    public IEnumerable<String> Codes() => _provinces.Keys;
 
     public IEnumerable<Province> GetAll()
     {
