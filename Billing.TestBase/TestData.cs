@@ -146,7 +146,7 @@ public class TestData
         .RuleFor(a => a.PhoneNumber, f => new PhoneNumber(f.Person.Phone));
 
     /// <summary>
-    /// Creates a taxable <see cref="ItemCategory.BooksAndMagazines"/> product worth $50.00.
+    /// Creates a taxable <see cref="ItemCategory.BooksAndMagazines"/> product worth $100.00.
     /// </summary>
     public static Product TaxableProduct(Guid id) => Product.Create(id, "BOOK-001", "Test Product", ItemCategory.BooksAndMagazines).AddPrice(100.00m, EffectiveDate);
 
@@ -170,19 +170,33 @@ public class TestData
         return InvoiceItemManager.Create(itemId, effectiveDate, quantity);
     }
 
+    /// <summary>
+    /// Creates a taxable <see cref="ItemCategory.BooksAndMagazines"/> product worth $100.00.
+    /// </summary>
     public static InvoiceItem TaxableProductItem(DateOnly effectiveDate)
     {
         return CreateInvoiceItem(TestData.TaxableProductId, effectiveDate);
     }
 
+    /// <summary>
+    /// Creates a non-taxable <see cref="ItemCategory.BasicGroceries"/> product worth $50.00.
+    /// </summary>
     public static InvoiceItem NonTaxableProductItem(DateOnly effectiveDate)
     {
         return CreateInvoiceItem(TestData.NonTaxableProductId, effectiveDate);
     }
+
+    /// <summary>
+    /// Creates a taxable <see cref="ItemCategory.ProfessionalServices"/> service worth $500.00.
+    /// </summary>
     public static InvoiceItem TaxableServiceItem(DateOnly effectiveDate)
     {
         return CreateInvoiceItem(TestData.TaxableServiceId, effectiveDate);
     }
+
+    /// <summary>
+    /// Creates a non-taxable <see cref="ItemCategory.EducationalServices"/> service worth $75.00.
+    /// </summary>
     public static InvoiceItem NonTaxableServiceItem(DateOnly effectiveDate)
     {
         return CreateInvoiceItem(TestData.NonTaxableServiceId, effectiveDate);

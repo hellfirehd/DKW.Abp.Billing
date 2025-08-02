@@ -6,7 +6,7 @@ public class TaxTests
     public void Constructor_SetsPropertiesCorrectly()
     {
         // Arrange & Act
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
 
         // Assert
         Assert.Equal("GST", tax.Code);
@@ -18,7 +18,7 @@ public class TaxTests
     public void AddTaxRate_AddsRateToCollection()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         var effectiveDate = new DateOnly(2020, 1, 1);
         var expirationDate = new DateOnly(2020, 12, 31);
 
@@ -37,7 +37,7 @@ public class TaxTests
     public void AddTaxRate_ReturnsSameInstance_ForChaining()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
 
         // Act
         var result = tax.AddTaxRate(0.1m, new DateOnly(2020, 1, 1));
@@ -50,7 +50,7 @@ public class TaxTests
     public void GetTaxRate_ReturnsNull_WhenNoRatesExist()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         var date = new DateOnly(2020, 6, 1);
 
         // Act
@@ -64,7 +64,7 @@ public class TaxTests
     public void GetTaxRate_ReturnsRate_WhenDateIsWithinRange()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         var effectiveDate = new DateOnly(2020, 1, 1);
         var expirationDate = new DateOnly(2020, 12, 31);
         tax.AddTaxRate(0.1m, effectiveDate, expirationDate);
@@ -82,7 +82,7 @@ public class TaxTests
     public void GetTaxRate_ReturnsNull_WhenDateIsOutsideRange()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         tax.AddTaxRate(0.1m, new DateOnly(2020, 1, 1), new DateOnly(2020, 12, 31));
         var date = new DateOnly(2021, 6, 1);
 
@@ -97,7 +97,7 @@ public class TaxTests
     public void GetTaxRate_ReturnsMostRecentRate_WhenMultipleRatesMatch()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         tax.AddTaxRate(0.1m, new DateOnly(2019, 1, 1), new DateOnly(2022, 12, 31));
         tax.AddTaxRate(0.15m, new DateOnly(2020, 1, 1), new DateOnly(2021, 12, 31));
         var date = new DateOnly(2020, 6, 1);
@@ -114,7 +114,7 @@ public class TaxTests
     public void GetTaxRate_HandlesNullExpirationDate()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax");
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal);
         tax.AddTaxRate(0.1m, new DateOnly(2020, 1, 1));
         var date = new DateOnly(2023, 6, 1);
 
@@ -130,7 +130,7 @@ public class TaxTests
     public void Name_CanBeModified()
     {
         // Arrange
-        var tax = new Tax("GST", "Goods and Services Tax")
+        var tax = new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal)
         {
             // Act
             Name = "Value Added Tax"

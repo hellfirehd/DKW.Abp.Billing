@@ -7,7 +7,7 @@ public class ItemClassificationTests
     {
         // Arrange
         var itemId = Guid.NewGuid();
-        var classification = new ItemClassification
+        var classification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = itemId,

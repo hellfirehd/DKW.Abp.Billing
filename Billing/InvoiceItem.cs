@@ -21,7 +21,7 @@ public class InvoiceItem
     public TaxCode TaxCode { get; set; } = TaxCode.Empty;
     public Boolean IsActive { get; set; } = true;
 
-    public ItemClassification ItemClassification { get; set; }
+    public TaxClassification TaxClasification { get; set; }
     public DateOnly InvoiceDate { get; set; }
     public Decimal Quantity { get; set; } = 1.0m;
     public List<TaxAmount> AppliedTaxes { get; private set; } = [];

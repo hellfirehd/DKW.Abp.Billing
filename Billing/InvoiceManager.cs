@@ -13,7 +13,7 @@ public class InvoiceManager(
     public ProvinceManager ProvinceManager { get; } = provinceManager;
     public InvoiceItemManager InvoiceItemManager { get; } = invoiceItemManager;
 
-    public ItemClassification ClassifyItem(InvoiceItem item)
+    public TaxClassification ClassifyItem(InvoiceItem item)
     {
         throw new NotImplementedException("Item classification logic is not implemented yet.");
     }
@@ -30,14 +30,14 @@ public class InvoiceManager(
         }
 
         // Get item classification
-        if (item.ItemClassification is null || !item.ItemClassification.IsValidOn(effectiveDate))
+        if (item.TaxClasification is null || !item.TaxClasification.IsValidOn(effectiveDate))
         {
             // Fallback to standard rates if no classification
             return TaxProvider.GetTaxRates(customerProfile.TaxProvince, effectiveDate);
         }
 
         // Get tax code
-        var taxCode = TaxCodeRepository.GetByCode(item.ItemClassification.TaxCode);
+        var taxCode = TaxCodeRepository.GetByCode(item.TaxClasification.TaxCode);
         if (taxCode is null || !taxCode.IsValidOn(effectiveDate))
         {
             // Fallback to standard rates if tax code not found

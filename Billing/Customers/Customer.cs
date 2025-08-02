@@ -7,6 +7,7 @@ public class Customer
     public Email EmailAddresses { get; set; } = Email.Empty;
     public List<Address> Addresses { get; set; } = [];
     public List<PaymentMethod> PaymentMethods { get; set; } = [];
-
-    public CustomerTaxProfile? TaxProfile { get; set; }
+    public CustomerType CustomerType { get; set; } = CustomerType.Regular;
+    public RecipientStatus RecipientStatus { get; set; } = RecipientStatus.Regular;
+    public CustomerTaxProfile TaxProfile { get; set; }
 }

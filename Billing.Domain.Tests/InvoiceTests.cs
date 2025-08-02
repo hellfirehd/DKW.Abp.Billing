@@ -221,7 +221,7 @@ public partial class InvoiceTests
         // Assert
         Assert.Single(invoice.Items);
         Assert.Equal(product, invoice.Items[0]);
-        Assert.Equal(200.00m, invoice.GetSubtotal());
+        Assert.Equal(100.00m, invoice.GetSubtotal());
     }
 
     [Fact]
@@ -241,15 +241,15 @@ public partial class InvoiceTests
     }
 
     [Fact]
-    public void Invoice_SetTaxRates_ShouldApplyTaxesToTaxableItems()
+    public void Invoice_SetTaxRates_ShouldApplyTaxes_OnlyOnTaxableItems()
     {
         // Arrange
         var invoice = new Invoice { Province = TestData.NovaScotia };
 
-        var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
+        var taxableProduct = TestData.TaxableProductItem(EffectiveDate); // $100
         invoice.AddItem(taxableProduct);
 
-        var nonTaxableProduct = TestData.NonTaxableProductItem(EffectiveDate);
+        var nonTaxableProduct = TestData.NonTaxableProductItem(EffectiveDate); // $50
         invoice.AddItem(nonTaxableProduct);
 
         var taxRates = TestData.TaxProvider.GetTaxRates(invoice.Province, invoice.InvoiceDate);
@@ -520,7 +520,7 @@ public partial class InvoiceTests
         var invoice = new Invoice { Province = _pm.GetProvince("BC") };
         var taxableProduct = TestData.TaxableProductItem(EffectiveDate);
         invoice.AddItem(taxableProduct);
-        var tax = new Tax("GST", "GST").AddTaxRate(0.05m, new DateOnly(2000, 1, 1)); // 5% GST
+        var tax = new Tax("GST", "GST", TaxJurisdiction.Federal).AddTaxRate(0.05m, new DateOnly(2000, 1, 1)); // 5% GST
 
         // Act
         invoice.SetTaxRates([tax.GetTaxRate(invoice.InvoiceDate)!]);

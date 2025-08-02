@@ -12,13 +12,14 @@ public sealed record Province : IEquatable<Province>, IComparable<Province>
         // Private constructor for Empty instance
     }
 
-    internal Province(String code, String name) : this()
+    internal Province(String code, String name, Boolean hasHst) : this()
     {
         Name = name.Trim();
         Code = code.Trim().ToUpperInvariant();
+        HasHST = hasHst;
     }
 
-    public static Province Create(String code, String name)
+    public static Province Create(String code, String name, Boolean hasHst)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(code);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -28,11 +29,12 @@ public sealed record Province : IEquatable<Province>, IComparable<Province>
             throw new ArgumentException("Province code must be exactly 2 characters long.", nameof(code));
         }
 
-        return new(code, name);
+        return new(code, name, hasHst);
     }
 
     public String Code { get; } = String.Empty;
     public String Name { get; } = String.Empty;
+    public Boolean HasHST { get; }
 
     public override String ToString() => Code;
 

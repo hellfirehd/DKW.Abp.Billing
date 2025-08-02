@@ -6,13 +6,15 @@ namespace Billing;
 /// <summary>
 /// Represents a tax that changes over time, such as GST or VAT.
 /// </summary>
-public class Tax(Guid id, string code, string name)
+public class Tax(Guid id, string code, string name, TaxJurisdiction jurisdiction)
 {
     private readonly List<TaxRate> _rates = [];
 
     public Guid Id { get; init; } = id;
     public String Code { get; } = code;
     public String Name { get; set; } = name;
+    public TaxJurisdiction Jurisdiction { get; set; } = jurisdiction;
+
     public IReadOnlyCollection<TaxRate> Rates => _rates.AsReadOnly();
 
     // Deterministically generate a Guid from code and name
@@ -35,8 +37,8 @@ public class Tax(Guid id, string code, string name)
         return new Guid(newGuid);
     }
 
-    public Tax(string code, string name)
-        : this(CreateDeterministicId(code), code, name) { }
+    public Tax(string code, string name, TaxJurisdiction jurisdiction)
+        : this(CreateDeterministicId(code), code, name, jurisdiction) { }
 
     public Tax AddTaxRate(Decimal rate, DateOnly effectiveDate, DateOnly? expirationDate = null)
     {

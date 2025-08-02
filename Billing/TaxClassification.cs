@@ -1,9 +1,9 @@
 namespace Billing;
 
 /// <summary>
-/// Item classification linking products/services to their appropriate tax codes
+/// Tax classification linking products/services to their appropriate tax codes
 /// </summary>
-public class ItemClassification
+public class TaxClassification
 {
     public required Guid Id { get; set; }
 

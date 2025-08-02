@@ -11,7 +11,7 @@ public class InvoiceItemTests
     public void InvoiceItem_ShouldCalculateTotal_WithTax()
     {
         // Arrange
-        var tax = new Tax("GST", "GST")
+        var tax = new Tax("GST", "GST", TaxJurisdiction.Federal)
             .AddTaxRate(0.05m, new DateOnly(2000, 01, 01)); // 5% GST
 
         var item = TestData.CreateInvoiceItem(TestData.TaxableProductId, EffectiveDate);
@@ -42,9 +42,9 @@ public class InvoiceItemTests
     public void InvoiceItem_ShouldCalculateTotal_WithMultipleTaxes()
     {
         // Arrange
-        var gst = new Tax("GST", "GST")
+        var gst = new Tax("GST", "GST", TaxJurisdiction.Federal)
             .AddTaxRate(0.05m, new DateOnly(2000, 01, 01)); // 5% GST
-        var pst = new Tax("PST", "PST")
+        var pst = new Tax("PST", "PST", TaxJurisdiction.Provincial)
             .AddTaxRate(0.07m, new DateOnly(2000, 01, 01)); // 7% PST
         var item = TestData.CreateInvoiceItem(TestData.TaxableProductId, EffectiveDate);
         item.ApplyTaxes([gst.GetTaxRate(EffectiveDate)!, pst.GetTaxRate(EffectiveDate)!]);
@@ -60,7 +60,7 @@ public class InvoiceItemTests
     public void InvoiceItem_ShouldCalculateTotal_WithExemptions()
     {
         // Arrange
-        var tax = new Tax("GST", "GST").AddTaxRate(0.05m, new DateOnly(2000, 01, 01)); // 5% GST
+        var tax = new Tax("GST", "GST", TaxJurisdiction.Federal).AddTaxRate(0.05m, new DateOnly(2000, 01, 01)); // 5% GST
 
         var item = TestData.CreateInvoiceItem(TestData.NonTaxableProductId, EffectiveDate);
         item.ApplyTaxes([tax.GetTaxRate(EffectiveDate)!]);

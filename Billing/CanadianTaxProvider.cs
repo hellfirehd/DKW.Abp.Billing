@@ -18,37 +18,37 @@ public class CanadianTaxProvider : ITaxProvider
     {
         _manager = provinceManager ?? throw new ArgumentNullException(nameof(provinceManager));
 
-        var gst = new Tax("GST", "GST")
+        var gst = new Tax("GST", "GST", TaxJurisdiction.Federal)
             .AddTaxRate(0.05M, new DateOnly(2008, 1, 1), DateOnly.MaxValue)
             .AddTaxRate(0.06M, new DateOnly(2006, 7, 1), new DateOnly(2008, 1, 1))
             .AddTaxRate(0.07M, new DateOnly(1991, 1, 1), new DateOnly(2006, 7, 1));
 
-        var bcpst = new Tax("BC-PST", "PST")
+        var bcpst = new Tax("BC-PST", "PST", TaxJurisdiction.Provincial)
             .AddTaxRate(0.07M, new DateOnly(2013, 4, 1), DateOnly.MaxValue);
 
-        var mbrst = new Tax("MB-PST", "RST")
+        var mbrst = new Tax("MB-PST", "RST", TaxJurisdiction.Provincial)
             .AddTaxRate(0.07M, new DateOnly(2019, 7, 1), DateOnly.MaxValue);
 
-        var nbhst = new Tax("NB-HST", "HST")
+        var nbhst = new Tax("NB-HST", "HST", TaxJurisdiction.Harmonized)
             .AddTaxRate(0.15M, new DateOnly(2016, 7, 1), DateOnly.MaxValue);
 
-        var nlhst = new Tax("NL-HST", "HST")
+        var nlhst = new Tax("NL-HST", "HST", TaxJurisdiction.Harmonized)
             .AddTaxRate(0.15M, new DateOnly(2016, 7, 1), DateOnly.MaxValue);
 
-        var nshst = new Tax("NS-HST", "HST")
+        var nshst = new Tax("NS-HST", "HST", TaxJurisdiction.Harmonized)
             .AddTaxRate(0.15M, new DateOnly(2010, 7, 1), new DateOnly(2025, 4, 1))
             .AddTaxRate(0.14M, new DateOnly(2025, 4, 1), DateOnly.MaxValue);
 
-        var onhst = new Tax("ON-HST", "HST")
+        var onhst = new Tax("ON-HST", "HST", TaxJurisdiction.Harmonized)
             .AddTaxRate(0.13M, new DateOnly(2010, 7, 1), DateOnly.MaxValue);
 
-        var pehst = new Tax("PE-HST", "HST")
+        var pehst = new Tax("PE-HST", "HST", TaxJurisdiction.Harmonized)
             .AddTaxRate(0.15M, new DateOnly(2016, 10, 1), DateOnly.MaxValue);
 
-        var qcqst = new Tax("QC-QST", "QST")
+        var qcqst = new Tax("QC-QST", "QST", TaxJurisdiction.Provincial)
             .AddTaxRate(0.09975M, new DateOnly(2013, 1, 1), DateOnly.MaxValue);
 
-        var skpst = new Tax("SK-PST", "PST")
+        var skpst = new Tax("SK-PST", "PST", TaxJurisdiction.Provincial)
             .AddTaxRate(0.06M, new DateOnly(2017, 3, 23), DateOnly.MaxValue);
 
         _taxMap = [

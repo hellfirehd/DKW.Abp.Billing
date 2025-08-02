@@ -13,7 +13,7 @@ public class InvoiceManagerTests
 
     private readonly InvoiceItem _testInvoiceItem;
     private readonly DateOnly _effectiveDate = new(2023, 1, 1);
-    private readonly Province _testProvince = Province.Create("AB", "Alberta");
+    private readonly Province _testProvince;
     private readonly List<TaxRate> _standardRates;
     private InvoiceManager SUT { get; }
 
@@ -35,8 +35,8 @@ public class InvoiceManagerTests
 
         _standardRates =
         [
-            new(new Tax("GST", "Goods and Services Tax"), 0.05m ,new DateOnly(2008, 1, 1)),
-            new(new Tax("PST", "Provincial Sales Tax"), 0.07m, new DateOnly(2013, 4, 1))
+            new(new Tax("GST", "Goods and Services Tax", TaxJurisdiction.Federal), 0.05m ,new DateOnly(2008, 1, 1)),
+            new(new Tax("PST", "Provincial Sales Tax", TaxJurisdiction.Provincial), 0.07m, new DateOnly(2013, 4, 1))
         ];
 
         // Setup mocks
@@ -51,6 +51,8 @@ public class InvoiceManagerTests
         // Default setup for tax provider
         _mockTaxProvider.Setup(p => p.GetTaxRates(It.IsAny<Province>(), It.IsAny<DateOnly>()))
             .Returns(_standardRates);
+
+        _testProvince = TestData.Alberta;
 
         // Create the invoice manager
         SUT = new InvoiceManager(
@@ -88,7 +90,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenItemClassificationIsNull_ReturnsStandardRates()
     {
         // Arrange
-        _testInvoiceItem.ItemClassification = null!;
+        _testInvoiceItem.TaxClasification = null!;
 
         // Act
         var result = SUT.GetTaxRatesForItem(_testInvoiceItem, _notExemptCustomerProfile, _effectiveDate);
@@ -102,7 +104,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenItemClassificationIsInvalid_ReturnsStandardRates()
     {
         // Arrange
-        var invalidClassification = new ItemClassification
+        var invalidClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -111,7 +113,7 @@ public class InvoiceManagerTests
             ExpirationDate = new DateOnly(2022, 12, 31) // Expired before effective date
         };
 
-        _testInvoiceItem.ItemClassification = invalidClassification;
+        _testInvoiceItem.TaxClasification = invalidClassification;
 
         // Act
         var result = SUT.GetTaxRatesForItem(_testInvoiceItem, _notExemptCustomerProfile, _effectiveDate);
@@ -125,7 +127,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenTaxCodeNotFound_ReturnsStandardRates()
     {
         // Arrange
-        var validClassification = new ItemClassification
+        var validClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -134,7 +136,7 @@ public class InvoiceManagerTests
             ExpirationDate = null
         };
 
-        _testInvoiceItem.ItemClassification = validClassification;
+        _testInvoiceItem.TaxClasification = validClassification;
 
         // Setup tax code repository to return null
         _mockTaxCodeRepository.Setup(r => r.GetByCode("TAXCODE001")).Returns((TaxCode)null!);
@@ -151,7 +153,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenTaxCodeIsInvalid_ReturnsStandardRates()
     {
         // Arrange
-        var validClassification = new ItemClassification
+        var validClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -159,7 +161,7 @@ public class InvoiceManagerTests
             AssignedDate = new DateOnly(2020, 1, 1)
         };
 
-        _testInvoiceItem.ItemClassification = validClassification;
+        _testInvoiceItem.TaxClasification = validClassification;
 
         // Setup tax code repository to return an invalid tax code
         var invalidTaxCode = new TaxCode
@@ -186,7 +188,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenTaxTreatmentIsExemptOrOutOfScope_ReturnsEmptyCollection(TaxTreatment treatment)
     {
         // Arrange
-        var validClassification = new ItemClassification
+        var validClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -194,7 +196,7 @@ public class InvoiceManagerTests
             AssignedDate = new DateOnly(2020, 1, 1)
         };
 
-        _testInvoiceItem.ItemClassification = validClassification;
+        _testInvoiceItem.TaxClasification = validClassification;
 
         // Setup tax code repository to return a valid exempt tax code
         var taxCode = new TaxCode
@@ -218,7 +220,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenTaxTreatmentIsZeroRated_ReturnsZeroRatedTaxes()
     {
         // Arrange
-        var validClassification = new ItemClassification
+        var validClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -226,7 +228,7 @@ public class InvoiceManagerTests
             AssignedDate = new DateOnly(2020, 1, 1)
         };
 
-        _testInvoiceItem.ItemClassification = validClassification;
+        _testInvoiceItem.TaxClasification = validClassification;
 
         // Setup tax code repository to return a valid zero-rated tax code
         var taxCode = new TaxCode
@@ -253,7 +255,7 @@ public class InvoiceManagerTests
     public void GetTaxRatesForItem_WhenTaxTreatmentIsStandard_ReturnsStandardRates()
     {
         // Arrange
-        var validClassification = new ItemClassification
+        var validClassification = new TaxClassification
         {
             Id = Guid.NewGuid(),
             ItemId = _testInvoiceItem.ItemId,
@@ -261,7 +263,7 @@ public class InvoiceManagerTests
             AssignedDate = new DateOnly(2020, 1, 1)
         };
 
-        _testInvoiceItem.ItemClassification = validClassification;
+        _testInvoiceItem.TaxClasification = validClassification;
 
         // Setup tax code repository to return a valid standard tax code
         var taxCode = new TaxCode
