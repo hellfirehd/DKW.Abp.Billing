@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.BillingManagement</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+        <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Volo.Abp.VirtualFileSystem" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="..\..\Dkw.BillingManagement.abpmdl" />
+        <Content Include="..\..\Dkw.BillingManagement.abpmdl">
+            <Pack>true</Pack>
+            <PackagePath>content\</PackagePath>
+        </Content>
+    </ItemGroup>
+
+</Project>

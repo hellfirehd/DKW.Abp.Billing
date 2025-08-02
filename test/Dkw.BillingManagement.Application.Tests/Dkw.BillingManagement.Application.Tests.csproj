@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.BillingManagement</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Dkw.BillingManagement.Application\Dkw.BillingManagement.Application.csproj" />
+        <ProjectReference Include="..\Dkw.BillingManagement.Domain.Tests\Dkw.BillingManagement.Domain.Tests.csproj" />
+    </ItemGroup>
+
+</Project>

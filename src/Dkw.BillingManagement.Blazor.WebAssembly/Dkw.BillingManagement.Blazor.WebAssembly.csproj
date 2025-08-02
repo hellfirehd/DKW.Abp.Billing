@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.BillingManagement.Blazor</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly.Theming" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Dkw.BillingManagement.Blazor.WebAssembly.Bundling\Dkw.BillingManagement.Blazor.WebAssembly.Bundling.csproj" />
+        <ProjectReference Include="..\Dkw.BillingManagement.Blazor\Dkw.BillingManagement.Blazor.csproj" />
+        <ProjectReference Include="..\Dkw.BillingManagement.HttpApi.Client\Dkw.BillingManagement.HttpApi.Client.csproj" />
+    </ItemGroup>
+
+</Project>

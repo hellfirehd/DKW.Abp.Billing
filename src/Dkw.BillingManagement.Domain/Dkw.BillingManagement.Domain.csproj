@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.BillingManagement</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Volo.Abp.Ddd.Domain" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Dkw.BillingManagement.Domain.Shared\Dkw.BillingManagement.Domain.Shared.csproj" />
+    </ItemGroup>
+
+</Project>

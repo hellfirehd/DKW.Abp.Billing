@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
 
-        <Title>DKW ABP Framework Billing Module</Title>
+        <Title>DKW Billing Management Module</Title>
         <Description>Provides Billing and Payment services to ABP Framework based applications.</Description>
         <Authors>Doug Wilson</Authors>
         <Company></Company>

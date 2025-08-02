@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Dkw.BillingManagement</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Volo.Abp.AutoMapper" />
+        <PackageReference Include="Volo.Abp.Ddd.Application" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Dkw.BillingManagement.Application.Contracts\Dkw.BillingManagement.Application.Contracts.csproj" />
+        <ProjectReference Include="..\Dkw.BillingManagement.Domain\Dkw.BillingManagement.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
