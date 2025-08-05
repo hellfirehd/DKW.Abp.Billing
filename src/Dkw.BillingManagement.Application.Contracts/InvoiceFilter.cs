@@ -1,3 +1,5 @@
+using Dkw.BillingManagement.Invoices;
+
 namespace Dkw.BillingManagement;
 
 public class InvoiceFilter

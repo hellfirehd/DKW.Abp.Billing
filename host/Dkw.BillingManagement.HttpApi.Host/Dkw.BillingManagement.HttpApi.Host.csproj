@@ -21,16 +21,16 @@
         <PackageReference Include="Volo.Abp.Autofac" />
         <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" />
         <PackageReference Include="Volo.Abp.EntityFrameworkCore.SqlServer" />
+        <PackageReference Include="Volo.Abp.Swashbuckle" />
         <PackageReference Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" />
         <PackageReference Include="Volo.Abp.SettingManagement.EntityFrameworkCore" />
-        <PackageReference Include="Volo.Abp.Swashbuckle" />
         <PackageReference Include="Volo.Abp.TenantManagement.EntityFrameworkCore" />
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\Dkw.BillingManagement.EntityFrameworkCore.SqlServer\Dkw.BillingManagement.EntityFrameworkCore.SqlServer.csproj" />
         <ProjectReference Include="..\..\src\Dkw.BillingManagement.HttpApi\Dkw.BillingManagement.HttpApi.csproj" />
         <ProjectReference Include="..\..\src\Dkw.BillingManagement.Application\Dkw.BillingManagement.Application.csproj" />
-        <ProjectReference Include="..\..\src\Dkw.BillingManagement.EntityFrameworkCore\Dkw.BillingManagement.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\Dkw.BillingManagement.Host.Shared\Dkw.BillingManagement.Host.Shared.csproj" />
     </ItemGroup>
 

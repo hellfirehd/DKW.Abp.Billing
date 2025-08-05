@@ -77,6 +77,11 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+        <Using Include="Moq" />
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
     <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
         <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -101,9 +106,6 @@
             <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Bogus.Text">
-            <TreatAsUsed>true</TreatAsUsed>
-        </PackageReference>
-        <PackageReference Include="Microsoft.NET.Test.Sdk">
             <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Moq" >
@@ -135,12 +137,6 @@
         <PackageReference Include="xunit.runner.visualstudio">
             <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
-        <Using Include="Moq" />
-        <Using Include="Shouldly" />
-        <Using Include="Xunit"/>
     </ItemGroup>
 
     <ItemGroup>

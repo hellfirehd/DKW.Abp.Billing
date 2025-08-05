@@ -6,8 +6,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk">
+            <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+    </ItemGroup>
+    
+    <ItemGroup>
         <ProjectReference Include="..\..\src\Dkw.BillingManagement.Domain\Dkw.BillingManagement.Domain.csproj" />
         <ProjectReference Include="..\Dkw.BillingManagement.TestBase\Dkw.BillingManagement.TestBase.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Samples\" />
     </ItemGroup>
 
 </Project>

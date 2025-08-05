@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <RootNamespace>Dkw.BillingManagement</RootNamespace>
@@ -15,6 +15,10 @@
         <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" />
         <PackageReference Include="Volo.Abp.Ddd.Domain.Shared" />
         <PackageReference Include="Volo.Abp.Validation" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dkw.BillingManagement.Abstractions\Dkw.BillingManagement.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

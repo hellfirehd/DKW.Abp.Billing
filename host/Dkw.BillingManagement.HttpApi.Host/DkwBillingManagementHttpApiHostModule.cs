@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -21,51 +21,48 @@ using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Authentication.JwtBearer;
+using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
-using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.SqlServer;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
-using Volo.Abp.PermissionManagement.EntityFrameworkCore;
-using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.Swashbuckle;
-using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.VirtualFileSystem;
 
 namespace Dkw.BillingManagement;
 
-[DependsOn(typeof(DkwBillingManagementApplicationModule))]
-[DependsOn(typeof(DkwBillingManagementEntityFrameworkCoreModule))]
-[DependsOn(typeof(DkwBillingManagementHttpApiModule))]
-[DependsOn(typeof(AbpAspNetCoreMvcUiMultiTenancyModule))]
 [DependsOn(typeof(AbpAspNetCoreAuthenticationJwtBearerModule))]
+[DependsOn(typeof(AbpAspNetCoreMvcUiMultiTenancyModule))]
+[DependsOn(typeof(AbpAspNetCoreSerilogModule))]
+[DependsOn(typeof(AbpAuditLoggingEntityFrameworkCoreModule))]
 [DependsOn(typeof(AbpAutofacModule))]
 [DependsOn(typeof(AbpCachingStackExchangeRedisModule))]
 [DependsOn(typeof(AbpEntityFrameworkCoreSqlServerModule))]
-[DependsOn(typeof(AbpAuditLoggingEntityFrameworkCoreModule))]
-[DependsOn(typeof(AbpPermissionManagementEntityFrameworkCoreModule))]
-[DependsOn(typeof(AbpSettingManagementEntityFrameworkCoreModule))]
-[DependsOn(typeof(AbpTenantManagementEntityFrameworkCoreModule))]
-[DependsOn(typeof(AbpAspNetCoreSerilogModule))]
 [DependsOn(typeof(AbpSwashbuckleModule))]
+[DependsOn(typeof(DkwBillingManagementApplicationModule))]
+[DependsOn(typeof(DkwBillingManagementEntityFrameworkCoreSqlServerModule))]
+[DependsOn(typeof(DkwBillingManagementHttpApiModule))]
 public class DkwBillingManagementHttpApiHostModule : AbpModule
 {
+    public override void PreConfigureServices(ServiceConfigurationContext context)
+    {
+        PreConfigure<AbpAspNetCoreMvcOptions>(options =>
+        {
+            options.ConventionalControllers
+                .Create(typeof(DkwBillingManagementApplicationModule).Assembly);
+        });
+    }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
-
-        Configure<AbpDbContextOptions>(options =>
-        {
-            options.UseSqlServer();
-        });
 
         Configure<AbpMultiTenancyOptions>(options =>
         {

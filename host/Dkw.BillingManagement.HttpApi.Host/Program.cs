@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -36,14 +36,24 @@ public class Program
         try
         {
             Log.Information("Starting web host.");
+
             var builder = WebApplication.CreateBuilder(args);
+
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseSerilog();
+
             await builder.AddApplicationAsync<DkwBillingManagementHttpApiHostModule>();
+
             var app = builder.Build();
+
+            await app.MigrateAsync();
+            await app.SeedAsync();
+
             await app.InitializeApplicationAsync();
+
             await app.RunAsync();
+
             return 0;
         }
         catch (Exception ex)

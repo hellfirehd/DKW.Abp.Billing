@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <RootNamespace>Dkw.BillingManagement</RootNamespace>
@@ -6,7 +6,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dkw.Abp.EntityFrameworkCore" />
         <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
+        <PackageReference Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" />
+        <PackageReference Include="Volo.Abp.SettingManagement.EntityFrameworkCore" />
+        <PackageReference Include="Volo.Abp.TenantManagement.EntityFrameworkCore" />
     </ItemGroup>
 
     <ItemGroup>

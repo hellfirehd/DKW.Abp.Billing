@@ -7,12 +7,19 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk">
+            <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
         <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Dkw.BillingManagement.EntityFrameworkCore\Dkw.BillingManagement.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\Dkw.BillingManagement.Application.Tests\Dkw.BillingManagement.Application.Tests.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="EntityFrameworkCore\Domains\" />
     </ItemGroup>
 
 </Project>

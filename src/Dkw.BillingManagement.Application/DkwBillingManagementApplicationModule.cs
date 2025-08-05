@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -19,10 +19,10 @@ using Volo.Abp.Modularity;
 
 namespace Dkw.BillingManagement;
 
-[DependsOn(typeof(DkwBillingManagementDomainModule))]
-[DependsOn(typeof(DkwBillingManagementApplicationContractsModule))]
-[DependsOn(typeof(AbpDddApplicationModule))]
 [DependsOn(typeof(AbpAutoMapperModule))]
+[DependsOn(typeof(AbpDddApplicationModule))]
+[DependsOn(typeof(DkwBillingManagementApplicationContractsModule))]
+[DependsOn(typeof(DkwBillingManagementDomainModule))]
 public class DkwBillingManagementApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

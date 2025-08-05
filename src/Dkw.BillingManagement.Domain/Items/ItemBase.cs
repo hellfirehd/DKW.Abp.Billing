@@ -1,0 +1,142 @@
+// DKW Billing Management
+// Copyright (C) 2025 Doug Wilson
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU Affero General Public License as published by the Free Software Foundation, either
+// version 3 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License along with this
+// program. If not, see <https://www.gnu.org/licenses/>.
+
+using Volo.Abp.Domain.Entities.Auditing;
+
+namespace Dkw.BillingManagement.Items;
+
+/// <summary>
+/// Represents an abstract item with properties for identification, classification, pricing, and tax information.
+/// </summary>
+/// <remarks>
+/// This class serves as a base type for items in an inventory or catalog system. It includes essential
+/// properties  such as ID, name, description, classification, tax code, unit price, and unit type. The <see
+/// cref="IsActive"/>  property indicates whether the item is currently active or available.
+/// </remarks>
+public abstract class ItemBase : FullAuditedEntity<Guid>
+{
+    private readonly List<ItemPrice> _pricing = [];
+
+    protected ItemBase()
+    {
+        // Parameterless constructor for EF Core/JSON serialization
+    }
+
+    public ItemBase(
+        Guid id,
+        String code,
+        String name,
+        String description,
+        ItemType itemType,
+        ItemCategory itemCategory,
+        String taxCode)
+    {
+        Id = id == Guid.Empty
+            ? throw new ArgumentNullException(nameof(id), "Id cannot be empty.")
+            : id;
+        SKU = code;
+        Name = name
+            ?? throw new ArgumentNullException(nameof(name), "Name cannot be null.");
+
+        Description = description
+            ?? throw new ArgumentNullException(nameof(description), "Description cannot be null.");
+
+        ItemCategory = itemCategory;
+
+        TaxCode = taxCode
+            ?? throw new ArgumentNullException(nameof(taxCode), "Tax Code cannot be null.");
+
+        UnitType = "Each";
+
+        IsActive = true;
+    }
+
+    public String SKU { get; set; } = String.Empty;
+    public String Name { get; set; } = String.Empty;
+    public String Description { get; set; } = String.Empty;
+    public virtual String UnitType { get; set; } = "Each";
+    public abstract ItemType ItemType { get; protected set; }
+    public ItemCategory ItemCategory { get; set; } = ItemCategory.GeneralGoods;
+    public String TaxCode { get; set; } = "STD-GOODS";
+    public Boolean IsActive { get; set; } = true;
+
+    public IReadOnlyCollection<ItemPrice> Pricing => _pricing.AsReadOnly();
+
+    public void AddPrice(ItemPrice itemPrice)
+    {
+        if (itemPrice.UnitPrice < Decimal.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemPrice),
+                "THe Unit Price of the item must not be less than $0.00. "
+                + "If you need a negative amount, apply a discount to the "
+                + "Invoice Line Item.");
+        }
+
+        _pricing.Add(itemPrice);
+    }
+
+    public Boolean IsAvailableOn(DateOnly date)
+    {
+        if (_pricing is null || _pricing.Count == 0)
+        {
+            return false; // No pricing information available
+        }
+
+        return _pricing.Any(p => p.InEffect(date));
+    }
+
+    public Decimal GetUnitPrice(DateOnly effectiveDate)
+    {
+        if (!IsAvailableOn(effectiveDate))
+        {
+            throw new InvalidOperationException("This item has not been priced.");
+        }
+
+        // Find the most recent price that is effective on or before the given date
+        return _pricing
+            .Where(p => p.InEffect(effectiveDate))
+            .OrderByDescending(p => p.EffectiveDate)
+            .Select(p => p.UnitPrice)
+            .FirstOrDefault();
+    }
+
+    public Boolean IsValid()
+    {
+        return !String.IsNullOrWhiteSpace(SKU)
+            && !String.IsNullOrWhiteSpace(Name)
+            && Description != null
+            && ItemType != ItemType.None
+            && ItemCategory != ItemCategory.None
+            && TaxCode != null
+            && _pricing.Count > 0;
+    }
+}
+
+public abstract class ItemBase<T> : ItemBase
+    where T : ItemBase<T>
+{
+    public T AddPrice(Decimal unitPrice, DateOnly effectiveDate, DateOnly? expirationDate = null)
+    {
+        if (unitPrice < Decimal.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(unitPrice),
+                "Unit Price cannot be less than $0.00. If you need a negative amount, "
+                + "apply a discount to the Invoice Line Item.");
+        }
+
+        AddPrice(new ItemPrice(unitPrice, effectiveDate, expirationDate));
+
+        return (T)this;
+    }
+}

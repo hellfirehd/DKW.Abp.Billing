@@ -1,75 +1,78 @@
+// DKW Billing Management
+// Copyright (C) 2025 Doug Wilson
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU Affero General Public License as published by the Free Software Foundation, either
+// version 3 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License along with this
+// program. If not, see <https://www.gnu.org/licenses/>.
+
+using Volo.Abp.Application.Services;
+
 namespace Dkw.BillingManagement;
 
 /// <summary>
 /// Application service contract for invoice operations
 /// </summary>
-public interface IInvoiceApplicationService
+public interface IInvoiceApplicationService : IApplicationService
 {
-    /// <summary>
-    /// Creates a new invoice
-    /// </summary>
-    Task<Guid> CreateInvoiceAsync(CreateInvoiceRequest request);
-
     /// <summary>
     /// Gets an invoice by ID
     /// </summary>
-    Task<InvoiceResponse?> GetInvoiceAsync(Guid invoiceId);
-
-    /// <summary>
-    /// Updates an invoice
-    /// </summary>
-    Task UpdateInvoiceAsync(Guid invoiceId, UpdateInvoiceRequest request);
-
-    /// <summary>
-    /// Adds an item to an invoice
-    /// </summary>
-    Task AddInvoiceItemAsync(Guid invoiceId, CreateInvoiceItemRequest request);
-
-    /// <summary>
-    /// Removes an item from an invoice
-    /// </summary>
-    Task RemoveInvoiceItemAsync(Guid invoiceId, String itemId);
-
-    /// <summary>
-    /// Applies discounts to an invoice
-    /// </summary>
-    Task ApplyDiscountsAsync(Guid invoiceId, List<String> discountIds);
-
-    /// <summary>
-    /// Applies surcharges to an invoice
-    /// </summary>
-    Task ApplySurchargesAsync(Guid invoiceId, List<String> surchargeIds);
-
-    /// <summary>
-    /// Sets tax rates for an invoice based on state and item categories
-    /// </summary>
-    Task SetTaxRatesAsync(Guid invoiceId);
-
-    /// <summary>
-    /// Marks an invoice as sent
-    /// </summary>
-    Task MarkInvoiceAsSentAsync(Guid invoiceId);
-
-    /// <summary>
-    /// Cancels an invoice
-    /// </summary>
-    Task CancelInvoiceAsync(Guid invoiceId);
-
-    /// <summary>
-    /// Processes a payment for an invoice
-    /// </summary>
-    Task<Guid> ProcessPaymentAsync(CreatePaymentRequest request);
-
-    /// <summary>
-    /// Processes a refund for an invoice
-    /// </summary>
-    Task<Guid> ProcessRefundAsync(CreateRefundRequest request);
+    Task<InvoiceDto> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all invoices with optional filtering
     /// </summary>
-    Task<List<InvoiceResponse>> GetInvoicesAsync(InvoiceFilter? filter = null);
+    Task<List<InvoiceDto>> GetInvoicesAsync(InvoiceFilter filter, CancellationToken cancellationToken = default);
 
-    Task MoveItemUp(Guid invoiceId, String itemId);
-    Task MoveItemDown(Guid invoiceId, String itemId);
+    /// <summary>
+    /// Creates a new invoice
+    /// </summary>
+    Task<Guid> CreateInvoiceAsync(CreateInvoice command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a line item to an invoice
+    /// </summary>
+    Task<Result> AddLineItemAsync(AddLineItem command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes an item from an invoice
+    /// </summary>
+    Task<Result> RemoveLineItemAsync(RemoveLineItem command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Applies discounts to an invoice
+    /// </summary>
+    Task<Result> AddDiscountsAsync(AddDiscount command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Applies surcharges to an invoice
+    /// </summary>
+    Task<Result> AddSurchargesAsync(AddSurcharge command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels an invoice
+    /// </summary>
+    Task<Result> PostInvoiceAsync(PostInvoice command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels an invoice
+    /// </summary>
+    Task<Result> CancelInvoiceAsync(CancelInvoice command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Processes a payment for an invoice
+    /// </summary>
+    Task<Result> ProcessPaymentAsync(ProcessPayment command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Processes a refund for an invoice
+    /// </summary>
+    Task<Result> ProcessRefundAsync(ProcessRefund command, CancellationToken cancellationToken = default);
 }

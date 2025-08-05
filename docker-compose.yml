@@ -1,0 +1,52 @@
+services:
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:latest
+    container_name: mssql
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+      - MSSQL_SA_PASSWORD=Strong@Passw0rd
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -No -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ./databases:/backups
+    ports:
+      - "1433:1433"
+
+  # sqlcmd:
+  #   image: mcr.microsoft.com/mssql/server:latest
+  #   container_name: sqlcmd
+  #   stdin_open: true
+  #   depends_on: 
+  #     mssql:
+  #       condition: service_healthy
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - MSSQL_PID=Developer
+  #     - MSSQL_SA_PASSWORD=Strong@Passw0rd
+  #   command: /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -No -S mssql -U sa -P $$MSSQL_SA_PASSWORD -i "/backups/RestoreDatabase.sql"'
+  #   volumes:
+  #     - ./databases:/backups
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+    - "6379:6379"
+
+  # smtp4dev:
+  #   image: rnwood/smtp4dev:latest
+  #   container_name: smtp4dev
+  #   restart: unless-stopped
+  #   ports:
+  #     - "2525:25"
+  #     - "25251:80"
+  #   environment:
+  #     - ASPNETCORE_URLS=http://+:80
+  #     - SMTP4DEV_SERVERURL=http://

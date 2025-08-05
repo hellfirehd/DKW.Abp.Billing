@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
+using Dkw.BillingManagement.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Authorization;
@@ -27,6 +28,7 @@ namespace Dkw.BillingManagement;
 [DependsOn(typeof(AbpTestBaseModule))]
 [DependsOn(typeof(AbpAuthorizationModule))]
 [DependsOn(typeof(AbpGuidsModule))]
+[DependsOn(typeof(DkwBillingManagementEntityFrameworkCoreModule))]
 public class DkwBillingManagementTestBaseModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -12,31 +12,31 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Volo.Abp;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Mvc;
+//using Volo.Abp;
 
-namespace Dkw.BillingManagement.Samples;
+//namespace Dkw.BillingManagement.Samples;
 
-[Area(BillingManagementRemoteServiceConsts.ModuleName)]
-[RemoteService(Name = BillingManagementRemoteServiceConsts.RemoteServiceName)]
-[Route("api/BillingManagement/sample")]
-public class SampleController(ISampleAppService sampleAppService)
-    : BillingManagementController, ISampleAppService
-{
-    private readonly ISampleAppService _sampleAppService = sampleAppService;
+//[Area(BillingManagementRemoteServiceConsts.ModuleName)]
+//[RemoteService(Name = BillingManagementRemoteServiceConsts.RemoteServiceName)]
+//[Route("api/BillingManagement/sample")]
+//public class SampleController(ISampleAppService sampleAppService)
+//    : BillingManagementController, ISampleAppService
+//{
+//    private readonly ISampleAppService _sampleAppService = sampleAppService;
 
-    [HttpGet]
-    public async Task<SampleDto> GetAsync()
-    {
-        return await _sampleAppService.GetAsync();
-    }
+//    [HttpGet]
+//    public async Task<SampleDto> GetAsync()
+//    {
+//        return await _sampleAppService.GetAsync();
+//    }
 
-    [HttpGet]
-    [Route("authorized")]
-    [Authorize]
-    public async Task<SampleDto> GetAuthorizedAsync()
-    {
-        return await _sampleAppService.GetAsync();
-    }
-}
+//    [HttpGet]
+//    [Route("authorized")]
+//    [Authorize]
+//    public async Task<SampleDto> GetAuthorizedAsync()
+//    {
+//        return await _sampleAppService.GetAsync();
+//    }
+//}

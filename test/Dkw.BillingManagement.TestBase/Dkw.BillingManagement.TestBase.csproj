@@ -10,4 +10,8 @@
         <PackageReference Include="Volo.Abp.Guids" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Dkw.BillingManagement.EntityFrameworkCore\Dkw.BillingManagement.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -1,4 +1,4 @@
-// DKW ABP Framework Extensions
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -35,9 +35,9 @@ public class DkwBillingManagementEntityFrameworkCoreTestModule : AbpModule
 
         Configure<AbpDbContextOptions>(options =>
         {
-            options.Configure(abpDbContextConfigurationContext =>
+            options.Configure(config =>
             {
-                abpDbContextConfigurationContext.DbContextOptions.UseSqlite(sqliteConnection);
+                config.DbContextOptions.UseSqlite(sqliteConnection);
             });
         });
     }
