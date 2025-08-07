@@ -12,13 +12,23 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
+using Dkw.BillingManagement.Taxes;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Services;
 
 namespace Dkw.BillingManagement.Customers;
 
 [ExposeServices(typeof(ICustomerManager))]
-public class CustomerManager : DomainService, ICustomerManager, ITransientDependency
+public class CustomerManager(ICustomerRepository customerRepository) : DomainService, ICustomerManager, ITransientDependency
 {
-    public Task<Customer> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken) => throw new NotImplementedException();
+    private readonly ICustomerRepository _customerRepository = customerRepository;
+
+    public async Task<Customer> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        var customer = await _customerRepository.GetAsync(customerId, includeDetails: true, cancellationToken);
+
+        return customer;
+    }
+
+    public Task<CustomerTaxProfile> GetTaxProfileAsync(Guid customerId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

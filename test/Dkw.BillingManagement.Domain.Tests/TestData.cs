@@ -29,7 +29,7 @@ public static class TestData
 {
     public static readonly DateOnly EffectiveDate = new(2020, 01, 01);
 
-    public static readonly Guid DefaultCustomerId = Guid.NewGuid();
+    public static readonly Guid CustomerId = Guid.NewGuid();
 
     /// <summary>
     /// Represents the unique identifier for a taxable product worth $100.00.
@@ -95,9 +95,11 @@ public static class TestData
     /// </summary>
     public static Invoice EmptyInvoice(Province placeOfSupply)
     {
+        ArgumentNullException.ThrowIfNull(placeOfSupply);
+
         var customer = Customer(placeOfSupply);
 
-        return new Invoice(Guid.NewGuid(), customer, placeOfSupply.Id, EffectiveDate);
+        return new Invoice(Guid.NewGuid(), customer, placeOfSupply, EffectiveDate);
     }
 
     public static ItemBase Item(Guid id, Decimal unitPrice = 50.00m, ItemType itemType = ItemType.Product, ItemCategory itemCategory = ItemCategory.BasicGroceries)
@@ -109,7 +111,7 @@ public static class TestData
     // Helper class for testing
     private sealed class MockItem : ItemBase<MockItem>
     {
-        public override ItemType ItemType { get; protected set; }
+        public override ItemType ItemType { get; init; }
 
         public static MockItem Create(Guid id, ItemType itemType, ItemCategory itemCategory)
         {

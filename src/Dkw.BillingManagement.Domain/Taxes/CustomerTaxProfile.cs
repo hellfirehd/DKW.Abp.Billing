@@ -26,12 +26,12 @@ public class CustomerTaxProfile : Entity<Guid>
     /// <summary>
     /// Customer identifier
     /// </summary>
-    public virtual String CustomerId { get; set; } = String.Empty;
+    public virtual Guid CustomerId { get; set; }
 
     /// <summary>
     /// Customer's tax status
     /// </summary>
-    public virtual CustomerTaxType RecipientStatus { get; set; } = CustomerTaxType.Regular;
+    public virtual TaxStatus TaxStatus { get; set; } = TaxStatus.Regular;
 
     /// <summary>
     /// GST/HST registration number (if applicable)
@@ -46,17 +46,17 @@ public class CustomerTaxProfile : Entity<Guid>
     /// <summary>
     /// Province where customer is located for tax purposes
     /// </summary>
-    public virtual Province TaxProvince { get; set; } = Province.Empty;
+    public virtual Province PlaceOfSupply { get; set; } = Province.Empty;
 
-    /// <summary>
-    /// Whether customer is eligible for tax exemptions
-    /// </summary>
-    public virtual Boolean IsEligibleForExemption { get; set; }
+    ///// <summary>
+    ///// Whether customer is eligible for tax exemptions
+    ///// </summary>
+    //public virtual Boolean IsEligibleForExemption { get { return CustomerTaxType } }
 
     /// <summary>
     /// Date when tax profile becomes effective
     /// </summary>
-    public virtual DateOnly EffectiveDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public virtual DateOnly EffectiveDate { get; set; }
 
     /// <summary>
     /// Date when tax profile expires
@@ -73,8 +73,18 @@ public class CustomerTaxProfile : Entity<Guid>
     /// </summary>
     public virtual Boolean QualifiesForExemption(DateOnly date)
     {
-        return IsEligibleForExemption
-            && date >= EffectiveDate
-            && (ExpirationDate == null || date <= ExpirationDate.Value);
+        if (date >= EffectiveDate && (ExpirationDate == null || date <= ExpirationDate.Value))
+        {
+            return TaxStatus switch
+            {
+                TaxStatus.Registrant => true,
+                TaxStatus.TaxExemptOrganization => true,
+                TaxStatus.FirstNations => true,
+                TaxStatus.NonResident => true,
+                _ => false
+            };
+        }
+
+        return false;
     }
 }

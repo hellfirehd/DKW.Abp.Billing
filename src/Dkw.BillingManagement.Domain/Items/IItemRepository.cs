@@ -16,14 +16,6 @@ using Volo.Abp.Domain.Repositories;
 
 namespace Dkw.BillingManagement.Items;
 
-public interface IItemRepository : IBasicRepository<ItemBase, Guid>
-{
-}
-
-public interface IProductRepository : IBasicRepository<Product, Guid>
-{
-}
-
-public interface IServiceRepository : IBasicRepository<Service, Guid>
+public interface IItemRepository : IBasicRepository<Item, Guid>
 {
 }

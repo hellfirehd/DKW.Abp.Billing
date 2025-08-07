@@ -18,5 +18,5 @@ namespace Dkw.BillingManagement.Customers;
 
 public interface ICustomerManager : IDomainService
 {
-    Task<Customer> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken);
+    Task<Customer> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
 }

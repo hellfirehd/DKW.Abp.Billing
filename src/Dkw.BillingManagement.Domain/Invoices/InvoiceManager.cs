@@ -12,84 +12,64 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
+using Dkw.BillingManagement.Customers;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Dkw.BillingManagement.Items;
 using Dkw.BillingManagement.Provinces;
 using Dkw.BillingManagement.Taxes;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Domain.Services;
 
 namespace Dkw.BillingManagement.Invoices;
 
 [ExposeServices(typeof(IInvoiceManager))]
 public class InvoiceManager(
     IInvoiceRepository invoiceRepository,
+    ILineItemFactory lineItemFactory,
     IItemRepository itemRepository,
     ITaxCodeRepository taxCodeRepository,
-    ITaxProvider taxProvider,
-    IProvinceRepository provinceManager)
-    : DomainService, IInvoiceManager, ITransientDependency
+    ITaxManager taxProvider,
+    IProvinceRepository provinceManager,
+    TimeProvider timeProvider)
+    : BillingManagementDomainService, IInvoiceManager, ITransientDependency
 {
     public IInvoiceRepository InvoiceRepository { get; } = invoiceRepository;
+    public ILineItemFactory LineItemFactory { get; } = lineItemFactory;
     public IItemRepository ItemRepository { get; } = itemRepository;
     public ITaxCodeRepository TaxCodeRepository { get; } = taxCodeRepository;
-    public ITaxProvider TaxProvider { get; } = taxProvider;
+    public ITaxManager TaxProvider { get; } = taxProvider;
     public IProvinceRepository ProvinceRepository { get; } = provinceManager;
-    public Task<Guid> CreateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    public Task<Invoice> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public TimeProvider TimeProvider { get; } = timeProvider;
 
-    /// <summary>
-    /// Gets applicable taxes for an item based on its tax code and customer profile
-    /// </summary>
-    public async Task<IEnumerable<ApplicableTax>> GetApplicableTaxesAsync(LineItem item, CustomerTaxProfile customerProfile, DateOnly effectiveDate)
+    public async Task<Guid> CreateInvoiceAsync(Customer customer, IEnumerable<LineItem> lineItems, CancellationToken cancellationToken = default)
     {
-        // Check customer exemption first
-        if (customerProfile.QualifiesForExemption(effectiveDate) == true)
-        {
-            return [];
-        }
+        ArgumentNullException.ThrowIfNull(customer);
+        ArgumentNullException.ThrowIfNull(lineItems);
 
-        // Get item classification
-        if ((item.TaxClasification is null || !item.TaxClasification.IsValidOn(effectiveDate)) && String.IsNullOrEmpty(item.ItemInfo.TaxCode))
-        {
-            // Fallback to standard taxes if no classification
-            return await TaxProvider.GetApplicableTaxesAsync(customerProfile.TaxProvince, effectiveDate);
-        }
+        var placeOfSupply = await ProvinceRepository.GetAsync(customer.BillingAddress.Province, cancellationToken: cancellationToken);
 
-        var code = item.TaxClasification?.TaxCode ?? item.ItemInfo.TaxCode;
+        var invoice = new Invoice(GuidGenerator.Create(), customer, placeOfSupply, Today, lineItems);
 
-        // Get tax code
-        var taxCode = await TaxCodeRepository.GetAsync(code);
-        if (taxCode is null || !taxCode.IsValidOn(effectiveDate))
-        {
-            // Fallback to standard taxes if tax code not found
-            return await TaxProvider.GetApplicableTaxesAsync(customerProfile.TaxProvince, effectiveDate);
-        }
+        var inserted = await InvoiceRepository.InsertAsync(invoice, autoSave: true, cancellationToken: cancellationToken);
 
-        // Apply tax treatment rules
-        return taxCode.TaxTreatment switch
-        {
-            TaxTreatment.Exempt or TaxTreatment.OutOfScope => [],
-            TaxTreatment.ZeroRated => await GetZeroRatedTaxRatesAsync(customerProfile.TaxProvince, effectiveDate),
-            _ => await TaxProvider.GetApplicableTaxesAsync(customerProfile.TaxProvince, effectiveDate)
-        };
+        return inserted.Id;
     }
 
-    private async Task<List<ApplicableTax>> GetZeroRatedTaxRatesAsync(Province taxProvince, DateOnly effectiveDate)
+    public async Task<Invoice> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default)
     {
-        // Zero-rated items typically have a specific tax rate of 0%
-        var list = await TaxProvider.GetApplicableTaxesAsync(taxProvince, effectiveDate);
+        var invoice = await InvoiceRepository.GetAsync(invoiceId, cancellationToken: cancellationToken)
+            ?? throw new BillingManagementException(ErrorCodes.NotFound, $"Invoice with ID {invoiceId} not found.");
 
-        return list
-            .Select(at => at with { Rate = 0.0m })
-            .ToList();
+        return invoice;
     }
 
-    /// <summary>
-    /// Calculates the proper breakdown based on invoice totals and applies the refund to the invoice.
-    /// </summary>
-    public async Task ApplyRefundAsync(Invoice invoice, Refund refund, CancellationToken cancellationToken)
+    public Task<Invoice> UpdateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default)
     {
-        var invoiceTotal = invoice.GetTotal();
+        throw new NotImplementedException();
+    }
+
+    public async Task ApplyRefundAsync(Invoice invoice, Refund refund, CancellationToken cancellationToken = default)
+    {
+        var invoiceTotal = invoice.GetGrandTotal();
         if (refund.Amount > invoiceTotal)
         {
             throw new InvalidOperationException($"Refund amount ({refund.Amount:c}) cannot exceed invoice total ({invoiceTotal:c}).");
@@ -97,8 +77,9 @@ public class InvoiceManager(
 
         var proportion = refund.Amount / invoiceTotal;
 
-        var subtotalRefund = Math.Round(invoice.GetTotalWithDiscountsAndShipping() * proportion, 2);
-        var taxRefund = Math.Round(invoice.GetTotalTax() * proportion, 2);
+        //var subtotalRefund = Math.Round(invoice.GetTotalWithDiscountsAndShipping() * proportion, 2);
+        var subtotalRefund = Math.Round((invoice.GetSubtotal() - invoice.GetDiscountAmount() + invoice.GetShippingAmount()) * proportion, 2);
+        var taxRefund = Math.Round(invoice.GetTaxAmount() * proportion, 2);
         var shippingRefund = refund.IsShippingRefunded ? Math.Round(invoice.Shipping.ShippingCost * proportion, 2) : Decimal.Zero;
 
         refund.SetAmounts(
@@ -122,7 +103,7 @@ public class InvoiceManager(
         await InvoiceRepository.UpdateAsync(invoice, autoSave: true, cancellationToken: cancellationToken);
     }
 
-    public async Task RemoveLineItemAsync(Invoice invoice, LineItem lineItem, CancellationToken cancellationToken)
+    public async Task RemoveLineItemAsync(Invoice invoice, LineItem lineItem, CancellationToken cancellationToken = default)
     {
 
         ArgumentNullException.ThrowIfNull(invoice);
@@ -130,5 +111,24 @@ public class InvoiceManager(
 
         invoice.RemoveLineItem(lineItem);
         await InvoiceRepository.UpdateAsync(invoice, autoSave: true, cancellationToken);
+    }
+
+    public async Task ApplyTaxesAsync(Invoice invoice, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(invoice);
+
+        var rates = await TaxProvider.GetTaxesAsync(invoice.PlaceOfSupply, invoice.InvoiceDate, cancellationToken);
+
+        invoice.ApplyTaxes(rates);
+
+        await InvoiceRepository.UpdateAsync(invoice, autoSave: true, cancellationToken: cancellationToken);
+    }
+
+    public async Task<LineItem> CreateLineItemAsync(Guid taxableProductId, DateOnly invoiceDate, CancellationToken cancellationToken = default)
+    {
+        var item = await ItemRepository.GetAsync(taxableProductId, cancellationToken: cancellationToken)
+            ?? throw new BillingManagementException(ErrorCodes.NotFound, $"Item with ID {taxableProductId} not found.");
+
+        return await LineItemFactory.CreateAsync(item, invoiceDate, cancellationToken);
     }
 }

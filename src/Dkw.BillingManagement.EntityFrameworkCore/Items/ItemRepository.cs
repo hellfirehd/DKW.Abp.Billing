@@ -21,24 +21,8 @@ namespace Dkw.BillingManagement.Items;
 
 [ExposeServices(typeof(IItemRepository))]
 public class ItemRepository(IDbContextProvider<IBillingManagementDbContext> dbContextProvider)
-    : EfCoreRepository<IBillingManagementDbContext, ItemBase, Guid>(dbContextProvider),
+    : EfCoreRepository<IBillingManagementDbContext, Item, Guid>(dbContextProvider),
     IItemRepository,
-    ITransientDependency
-{
-}
-
-[ExposeServices(typeof(IProductRepository))]
-public class ProductRepository(IDbContextProvider<IBillingManagementDbContext> dbContextProvider)
-    : EfCoreRepository<IBillingManagementDbContext, Product, Guid>(dbContextProvider),
-    IProductRepository,
-    ITransientDependency
-{
-}
-
-[ExposeServices(typeof(IServiceRepository))]
-public class ServiceRepository(IDbContextProvider<IBillingManagementDbContext> dbContextProvider)
-    : EfCoreRepository<IBillingManagementDbContext, Service, Guid>(dbContextProvider),
-    IServiceRepository,
     ITransientDependency
 {
 }

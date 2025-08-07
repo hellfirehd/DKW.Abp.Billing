@@ -21,6 +21,9 @@ namespace Dkw.BillingManagement.Invoices;
 /// </summary>
 public enum DiscountScope
 {
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    None = 0,
+
     [Description("Per Item")]
     PerItem,
 

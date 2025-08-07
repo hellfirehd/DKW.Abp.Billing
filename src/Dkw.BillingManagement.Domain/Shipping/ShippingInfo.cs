@@ -1,4 +1,4 @@
-﻿// DKW Billing Management
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -14,7 +14,7 @@
 
 namespace Dkw.BillingManagement.Shipping;
 
-public abstract record ShippingInfo : ValueObject<ShippingInfo>
+public record ShippingInfo : ValueObject<ShippingInfo>
 {
     public static readonly ShippingInfo Empty = new EmptyShipping();
     private sealed record EmptyShipping : ShippingInfo
@@ -29,7 +29,7 @@ public abstract record ShippingInfo : ValueObject<ShippingInfo>
         public override String Name => "No Shipping Selected";
     }
 
-    public abstract String Name { get; }
+    public virtual String Name { get; protected set; } = String.Empty;
     public virtual String Carrier { get; protected set; } = String.Empty;
     public virtual String TrackingNumber { get; protected set; } = String.Empty;
     public virtual Decimal ShippingCost { get; protected set; }

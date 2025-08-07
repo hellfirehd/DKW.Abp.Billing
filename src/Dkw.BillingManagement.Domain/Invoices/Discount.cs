@@ -49,14 +49,8 @@ public class Discount : FullAuditedEntity<Guid>
     /// <summary>
     /// Calculates the discount amount based on the base amount
     /// </summary>
-    public Decimal GetDiscount(Decimal baseAmount)
+    public Decimal GetAmount(Decimal baseAmount)
     {
-        if (!IsActive || StartDate.HasValue && DateOnly.FromDateTime(DateTime.UtcNow) < StartDate.Value ||
-            EndDate.HasValue && DateOnly.FromDateTime(DateTime.UtcNow) > EndDate.Value)
-        {
-            return 0;
-        }
-
         if (MinimumAmount.HasValue && baseAmount < MinimumAmount.Value)
         {
             return 0;

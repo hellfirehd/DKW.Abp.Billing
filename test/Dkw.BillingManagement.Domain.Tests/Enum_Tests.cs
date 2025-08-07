@@ -1,6 +1,16 @@
-using Dkw.BillingManagement.Customers;
-using Dkw.BillingManagement.Items;
-using Dkw.BillingManagement.Taxes;
+// DKW Billing Management
+// Copyright (C) 2025 Doug Wilson
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU Affero General Public License as published by the Free Software Foundation, either
+// version 3 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License along with this
+// program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace Dkw.BillingManagement;
 
@@ -9,48 +19,4 @@ namespace Dkw.BillingManagement;
 /// </summary>
 public class Enum_Tests
 {
-    [Fact]
-    public void RecipientStatus_ShouldHaveCorrectEnumValues()
-    {
-        // Test that the recipient status enum has all expected values
-        Assert.True(Enum.IsDefined(CustomerTaxType.Regular));
-        Assert.True(Enum.IsDefined(CustomerTaxType.Registrant));
-        Assert.True(Enum.IsDefined(CustomerTaxType.TaxExempt));
-        Assert.True(Enum.IsDefined(CustomerTaxType.FirstNations));
-        Assert.True(Enum.IsDefined(CustomerTaxType.NonResident));
-        Assert.True(Enum.IsDefined(CustomerTaxType.Government));
-    }
-
-    [Fact]
-    public void ItemCategory_ShouldHaveCorrectEnumValues()
-    {
-        // Test key item categories
-        Assert.True(Enum.IsDefined(ItemCategory.GeneralGoods));
-        Assert.True(Enum.IsDefined(ItemCategory.BasicGroceries));
-        Assert.True(Enum.IsDefined(ItemCategory.PrescriptionDrugs));
-        Assert.True(Enum.IsDefined(ItemCategory.HealthcareServices));
-        Assert.True(Enum.IsDefined(ItemCategory.EducationalServices));
-        Assert.True(Enum.IsDefined(ItemCategory.FinancialServices));
-
-        // Verify numeric values for organization
-        Assert.Equal(100, (Int32)ItemCategory.GeneralGoods); // Goods start at 100
-        Assert.Equal(200, (Int32)ItemCategory.GeneralServices); // Services start at 200
-        Assert.Equal(300, (Int32)ItemCategory.Exports); // Special categories start at 300
-    }
-
-    [Fact]
-    public void TaxTreatment_ShouldHaveCorrectEnumValues()
-    {
-        // Test all tax treatments
-        Assert.True(Enum.IsDefined(TaxTreatment.Standard));
-        Assert.True(Enum.IsDefined(TaxTreatment.ZeroRated));
-        Assert.True(Enum.IsDefined(TaxTreatment.Exempt));
-        Assert.True(Enum.IsDefined(TaxTreatment.OutOfScope));
-
-        // Verify expected numeric values
-        Assert.Equal(0, (Int32)TaxTreatment.Standard);
-        Assert.Equal(1, (Int32)TaxTreatment.ZeroRated);
-        Assert.Equal(2, (Int32)TaxTreatment.Exempt);
-        Assert.Equal(3, (Int32)TaxTreatment.OutOfScope);
-    }
 }

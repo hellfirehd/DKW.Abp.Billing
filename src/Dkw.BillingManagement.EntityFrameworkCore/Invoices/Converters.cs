@@ -13,6 +13,7 @@
 // program. If not, see <https://www.gnu.org/licenses/>.
 
 using Dkw.BillingManagement.EntityFrameworkCore;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Dkw.BillingManagement.Invoices;

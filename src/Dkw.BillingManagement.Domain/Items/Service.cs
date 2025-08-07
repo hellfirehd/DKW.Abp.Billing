@@ -40,7 +40,7 @@ public class Service : ItemBase<Service>
         UnitType = "Hour";
     }
 
-    public override ItemType ItemType { get; protected set; } = ItemType.Service;
+    public override ItemType ItemType { get => ItemType.Service; init { } }
     public String ServiceType { get; set; } = String.Empty;
     public String ProviderName { get; set; } = String.Empty;
     public DateOnly? ServiceDate { get; set; }

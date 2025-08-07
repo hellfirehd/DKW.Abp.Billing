@@ -12,9 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-using Dkw.BillingManagement.Provinces;
 using Shouldly;
-using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 
 namespace Dkw.BillingManagement.Invoices;
@@ -23,35 +21,29 @@ namespace Dkw.BillingManagement.Invoices;
  * Then inherit these abstract classes from EF Core & MongoDB test projects.
  * In this way, both database providers are tests with the same set tests.
  */
-public abstract class InvoiceRepository_Tests<TStartupModule> : BillingManagementTestBase<TStartupModule>
+public abstract class InvoiceRepository_Tests<TStartupModule> : BillingManagementDomainTestBase<TStartupModule, InvoiceRepository>
     where TStartupModule : IAbpModule
 {
     private readonly DateOnly EffectiveDate = new(2020, 01, 01);
 
-    protected IGuidGenerator GuidGenerator { get; }
-    protected IProvinceRepository ProvinceRepository { get; }
-
-    private IInvoiceRepository SUT { get; }
-
-    protected InvoiceRepository_Tests()
-    {
-        GuidGenerator = GetRequiredService<IGuidGenerator>();
-        ProvinceRepository = GetRequiredService<IProvinceRepository>();
-
-        SUT = GetRequiredService<IInvoiceRepository>();
-    }
-
     [Fact]
     public async Task InvoiceRepository_InsertInvoice_Succeeds()
     {
-        var province = await ProvinceRepository.GetAsync("BC");
+        var customer = await CustomerRepository.GetAsync(TestData.CustomerId);
+        var province = await ProvinceRepository.GetAsync(customer.ShippingAddress.Province);
+        var invoiceId = GuidGenerator.Create();
 
-        var invoice = new Invoice(GuidGenerator.Create(), TestData.Customer(province), province.Id, EffectiveDate);
+        var invoice = Invoice.Create(invoiceId, customer.Id, province.Id, customer.ShippingAddress, customer.BillingAddress, EffectiveDate);
 
         var result = await SUT.InsertAsync(invoice);
 
         result.ShouldNotBeNull();
-        result.Id.ShouldNotBe(Guid.Empty);
-        result.Id.ShouldBe(invoice.Id);
+        result.Id.ShouldBe(invoiceId);
+        result.InvoiceDate.ShouldBe(EffectiveDate);
+        result.CustomerId.ShouldBe(customer.Id);
+        result.PlaceOfSupplyId.ShouldBe(province.Id);
+        result.BillingAddress.ShouldBe(customer.BillingAddress);
+        result.ShippingAddress.ShouldBe(customer.ShippingAddress);
+        result.Status.ShouldBe(InvoiceStatus.Draft);
     }
 }

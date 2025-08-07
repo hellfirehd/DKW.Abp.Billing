@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
+using Dkw.BillingManagement.Customers;
 using Dkw.BillingManagement.Payments;
 using Shouldly;
 using Volo.Abp.Modularity;
@@ -24,7 +25,7 @@ namespace Dkw.BillingManagement.Invoices;
 public abstract class InvoiceApplicationService_Tests<TStartupModule> : BillingManagementApplicationTestBase<TStartupModule, InvoiceApplicationService>
     where TStartupModule : IAbpModule
 {
-    private readonly DateOnly _testDate = new(2022, 1, 1);
+    private readonly DateOnly TestDate = new(2022, 1, 1);
 
     [Fact]
     public async Task CreateInvoiceAsync_ShouldCreateInvoice_WithValidRequest()
@@ -33,7 +34,7 @@ public abstract class InvoiceApplicationService_Tests<TStartupModule> : BillingM
         var command = new CreateInvoice()
         {
             CustomerId = Guid.NewGuid(),
-            InvoiceDate = _testDate,
+            InvoiceDate = TestDate,
             Items =
             [
                 new CreateLineItem
@@ -45,12 +46,12 @@ public abstract class InvoiceApplicationService_Tests<TStartupModule> : BillingM
         };
 
         // Act
-        var invoiceId = await SUT.CreateInvoiceAsync(command);
+        var result = await SUT.CreateInvoiceAsync(command);
 
         // Assert
-        invoiceId.ShouldNotBe(Guid.Empty);
+        result.Value.ShouldNotBe(Guid.Empty);
 
-        var invoice = await SUT.GetInvoiceAsync(invoiceId);
+        var invoice = await SUT.GetInvoiceAsync(result.Value);
         Assert.NotNull(invoice);
         Assert.Single(invoice.Items);
         Assert.Equal(200.00m, invoice.Subtotal);
@@ -267,20 +268,12 @@ public abstract class InvoiceApplicationService_Tests<TStartupModule> : BillingM
     /// <returns></returns>
     private async Task<Guid> CreateTestInvoice()
     {
-        var request = new CreateInvoice
-        {
-            CustomerId = Guid.NewGuid(),
-            Items =
-            [
-                new CreateLineItem
-                {
-                    ItemId = TestData.TaxableProductId,
-                    Quantity = 1,
-                }
-            ]
-        };
+        var customer = await GetRequiredService<ICustomerRepository>().GetAsync(TestData.CustomerId);
+        var manager = GetRequiredService<IInvoiceManager>();
 
-        return await SUT.CreateInvoiceAsync(request);
+        var lineItem = await manager.CreateLineItemAsync(TestData.TaxableProductId, TestDate);
+
+        return await manager.CreateInvoiceAsync(customer, [lineItem]);
     }
 
     private async Task<Guid> CreateTestInvoiceWithPayment()

@@ -17,7 +17,7 @@ using Volo.Abp.Domain.Entities.Auditing;
 namespace Dkw.BillingManagement.Items;
 
 /// <summary>
-/// Represents an abstract item with properties for identification, classification, pricing, and tax information.
+/// Represents an item with properties for identification, classification, pricing, and tax information.
 /// </summary>
 /// <remarks>
 /// This class serves as a base type for items in an inventory or catalog system. It includes essential
@@ -62,14 +62,14 @@ public abstract class ItemBase : FullAuditedEntity<Guid>
         IsActive = true;
     }
 
-    public String SKU { get; set; } = String.Empty;
-    public String Name { get; set; } = String.Empty;
-    public String Description { get; set; } = String.Empty;
-    public virtual String UnitType { get; set; } = "Each";
-    public abstract ItemType ItemType { get; protected set; }
-    public ItemCategory ItemCategory { get; set; } = ItemCategory.GeneralGoods;
-    public String TaxCode { get; set; } = "STD-GOODS";
-    public Boolean IsActive { get; set; } = true;
+    public virtual String SKU { get; init; } = String.Empty;
+    public virtual String Name { get; init; } = String.Empty;
+    public virtual String Description { get; init; } = String.Empty;
+    public virtual String UnitType { get; init; } = "Each";
+    public virtual ItemType ItemType { get; init; }
+    public virtual ItemCategory ItemCategory { get; init; } = ItemCategory.GeneralGoods;
+    public virtual String TaxCode { get; init; } = "STD-GOODS";
+    public virtual Boolean IsActive { get; init; } = true;
 
     public IReadOnlyCollection<ItemPrice> Pricing => _pricing.AsReadOnly();
 

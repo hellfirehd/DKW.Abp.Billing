@@ -12,16 +12,15 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-using Dkw.BillingManagement.Taxes;
+using Dkw.BillingManagement.Customers;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Volo.Abp.Domain.Services;
 
 namespace Dkw.BillingManagement.Invoices;
 public interface IInvoiceManager : IDomainService
 {
-    Task AddLineItem(Invoice invoice, LineItem item, CancellationToken cancellationToken = default);
-    Task ApplyRefundAsync(Invoice invoice, Refund refund, CancellationToken cancellationToken);
-    Task<Guid> CreateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default);
+    Task<Guid> CreateInvoiceAsync(Customer customer, IEnumerable<LineItem> lineItems, CancellationToken cancellationToken = default);
+    Task<LineItem> CreateLineItemAsync(Guid taxableProductId, DateOnly invoiceDate, CancellationToken cancellationToken = default);
     Task<Invoice> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<ApplicableTax>> GetApplicableTaxesAsync(LineItem item, CustomerTaxProfile customerProfile, DateOnly effectiveDate);
-    Task RemoveLineItemAsync(Invoice invoice, LineItem lineItem, CancellationToken cancellationToken);
+    Task<Invoice> UpdateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default);
 }

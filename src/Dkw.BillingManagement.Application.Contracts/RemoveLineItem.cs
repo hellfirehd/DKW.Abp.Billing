@@ -1,4 +1,4 @@
-﻿// DKW Billing Management
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -17,5 +17,5 @@ namespace Dkw.BillingManagement;
 public class RemoveLineItem
 {
     public Guid InvoiceId { get; set; }
-    public Guid ItemId { get; set; }
+    public Guid LineItemId { get; set; }
 }

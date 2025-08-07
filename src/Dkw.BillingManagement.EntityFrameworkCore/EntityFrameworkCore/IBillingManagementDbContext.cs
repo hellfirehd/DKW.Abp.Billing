@@ -14,6 +14,7 @@
 
 using Dkw.BillingManagement.Customers;
 using Dkw.BillingManagement.Invoices;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Dkw.BillingManagement.Items;
 using Dkw.BillingManagement.Payments;
 using Dkw.BillingManagement.Provinces;
@@ -34,6 +35,7 @@ public interface IBillingManagementDbContext : IEfCoreDbContext
     DbSet<Payment> Payments { get; }
     DbSet<PaymentMethod> PaymentMethods { get; }
     DbSet<ItemBase> ItemBase { get; }
+    DbSet<ItemInfo> ItemInfo { get; }
     DbSet<Province> Provinces { get; }
     DbSet<Refund> Refunds { get; }
     DbSet<Tax> Taxes { get; }

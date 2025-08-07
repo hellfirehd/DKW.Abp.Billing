@@ -35,7 +35,7 @@ public class Product : ItemBase<Product>
         };
     }
 
-    public override ItemType ItemType { get; protected set; } = ItemType.Product;
+    public override ItemType ItemType { get => ItemType.Product; init { } }
     public Decimal Weight { get; set; }
     public String Manufacturer { get; set; } = String.Empty;
     public Boolean RequiresShipping { get; set; } = true;

@@ -1,4 +1,4 @@
-﻿// DKW Billing Management
+// DKW Billing Management
 // Copyright (C) 2025 Doug Wilson
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of
@@ -21,4 +21,5 @@ public static class ErrorCodes
     public static readonly ErrorCode InvalidRefundAmount = new(2001, "Invalid Refund Amount");
     public static readonly ErrorCode InvalidDiscountScope = new(2002, "Invalid Discount Scope");
     public static readonly ErrorCode CannotCancelInvoice = new(2003, "Cannot Cancel Invoice");
+    public static readonly ErrorCode CannotPostInvoice = new(2004, "Cannot Post Invoice");
 }

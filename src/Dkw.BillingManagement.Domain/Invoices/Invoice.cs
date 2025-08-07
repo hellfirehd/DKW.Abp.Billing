@@ -13,6 +13,7 @@
 // program. If not, see <https://www.gnu.org/licenses/>.
 
 using Dkw.BillingManagement.Customers;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Dkw.BillingManagement.Payments;
 using Dkw.BillingManagement.Provinces;
 using Dkw.BillingManagement.Shipping;
@@ -25,6 +26,20 @@ namespace Dkw.BillingManagement.Invoices;
 /// </summary>
 public class Invoice : FullAuditedAggregateRoot<Guid>
 {
+    public static Invoice Create(Guid invoiceId, Guid customerId, Guid provinceId, Address shippingAddress, Address billingAddress, DateOnly invoiceDate)
+    {
+        return new Invoice()
+        {
+            Id = invoiceId,
+            CustomerId = customerId,
+            PlaceOfSupplyId = provinceId,
+            InvoiceDate = invoiceDate,
+            Status = InvoiceStatus.Draft,
+            ShippingAddress = shippingAddress ?? Address.Empty,
+            BillingAddress = billingAddress ?? Address.Empty,
+        };
+    }
+
     private readonly List<LineItem> _lineItems = [];
     private readonly List<Discount> _discounts = [];
     private readonly List<Surcharge> _surcharges = [];
@@ -42,7 +57,7 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
     public Invoice(
         Guid invoiceId,
         Customer customer,
-        Guid placeOfSupplyId,
+        Province placeOfSupply,
         DateOnly invoiceDate,
         IEnumerable<LineItem>? items = null,
         IEnumerable<Discount>? discounts = null,
@@ -52,7 +67,7 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
 
         Customer = customer ?? throw new ArgumentNullException(nameof(customer));
 
-        PlaceOfSupplyId = placeOfSupplyId;
+        PlaceOfSupply = placeOfSupply ?? throw new ArgumentNullException(nameof(placeOfSupply));
 
         if (items is not null)
         {
@@ -73,20 +88,12 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
     }
 
     // Properties
-
     public virtual String InvoiceNumber { get; protected set; } = String.Empty;
     public virtual DateOnly InvoiceDate { get; protected set; }
     public virtual DateOnly DueDate { get; set; }
     public virtual InvoiceStatus Status { get; private set; } = InvoiceStatus.Draft;
     public virtual String ReferenceNumber { get; protected set; } = String.Empty;
     public virtual ShippingInfo Shipping { get; protected set; } = ShippingInfo.Empty;
-
-    // Relationships
-    public virtual Guid CustomerId { get; protected set; }
-    public virtual Customer Customer { get; protected set; } = default!;
-
-    public virtual Guid PlaceOfSupplyId { get; protected set; }
-    public virtual Province PlaceOfSupply { get; protected set; } = default!;
 
     public virtual Address BillingAddress
     {
@@ -99,6 +106,13 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
         get => shippingAddress ?? Customer.ShippingAddress ?? Address.Empty;
         protected set => shippingAddress = value;
     }
+
+    // Relationships
+    public virtual Guid CustomerId { get; protected set; }
+    public virtual Customer Customer { get; protected set; } = default!;
+
+    public virtual Guid PlaceOfSupplyId { get; protected set; }
+    public virtual Province PlaceOfSupply { get; protected set; } = default!;
 
     // Line Items
     public virtual IReadOnlyList<LineItem> LineItems => _lineItems;
@@ -176,12 +190,10 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
         if (discount.Scope == DiscountScope.PerOrder)
         {
             _discounts.Add(discount);
-
-            Recalculate();
         }
         else
         {
-            throw new BillingManagementException(ErrorCodes.InvalidDiscountScope, "Only order-level discounts can be applied to the invoice.");
+            throw new BillingManagementException(ErrorCodes.InvalidDiscountScope, "Only Per-Order discounts can be applied to the invoice. The specified discount is Per-Item.");
         }
     }
 
@@ -224,6 +236,11 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
     /// </summary>
     public void PostInvoice()
     {
+        if (LineItems.Count == 0)
+        {
+            throw new BillingManagementException(ErrorCodes.CannotPostInvoice, "Cannot post an invoice with no line items.");
+        }
+
         if (Status is InvoiceStatus.Draft or InvoiceStatus.Pending)
         {
             Status = InvoiceStatus.Posted;
@@ -252,7 +269,7 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
     {
         var balance = GetBalance();
         var totalRefunded = GetTotalRefunded();
-        var total = GetTotal();
+        var total = GetGrandTotal();
 
         if (totalRefunded >= total)
         {
@@ -294,56 +311,78 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
         => _lineItems.Sum(item => item.GetSubtotal());
 
     /// <summary>
-    /// Gets the total discount amount from line items
-    /// </summary>
-    public Decimal GetLineItemDiscounts()
-        => _lineItems.Sum(item => item.GetDiscountTotal());
-
-    /// <summary>
-    /// Gets the total after line item discounts but before order discounts
-    /// </summary>
-    public Decimal GetDiscountedSubtotal()
-        => _lineItems.Sum(item => item.GetDiscountTotal());
-
-    /// <summary>
     /// Gets the total order-level discount amount
     /// </summary>
-    public Decimal GetOrderDiscounts()
+    public Decimal GetOrderDiscountAmount()
     {
-        var discountedSubtotal = GetDiscountedSubtotal();
+        var subtotal = GetSubtotal();
         return _discounts
-            .Where(d => d.IsActive)
-            .Sum(d => d.GetDiscount(discountedSubtotal));
+            //.Where(d => d.IsActive) <-- It is not the Invoice's responsibility to determine which discounts to apply.
+            .Sum(d => d.GetAmount(subtotal));
     }
 
     /// <summary>
-    /// Gets the total after all discounts but before taxes and surcharges
+    /// Gets the total discount amount from line items
     /// </summary>
-    public Decimal GetTotalWithDiscountsAndShipping()
-        => Math.Max(0, GetDiscountedSubtotal() - GetOrderDiscounts() + Shipping.ShippingCost);
+    public Decimal GetLineItemDiscountAmount()
+        => _lineItems.Sum(item => item.GetDiscountTotal());
 
     /// <summary>
-    /// Gets the total tax amount
+    /// Gets the combined total of order and line item discounts
     /// </summary>
-    public Decimal GetTotalTax()
-        => _lineItems.Sum(item => item.GetTaxTotal());
+    public Decimal GetDiscountAmount()
+        => GetOrderDiscountAmount() + GetLineItemDiscountAmount();
+
+    /// <summary>
+    /// Gets the shipping amount
+    /// </summary>
+    public Decimal GetShippingAmount()
+        => Shipping.ShippingCost;
 
     /// <summary>
     /// Gets the total surcharge amount
     /// </summary>
-    public Decimal GetTotalSurcharges()
+    public Decimal GetSurchargeAmount()
     {
-        var baseAmount = GetTotalWithDiscountsAndShipping() + GetTotalTax();
-        return _surcharges
-            .Where(s => s.IsActive)
-            .Sum(s => s.CalculateSurchargeAmount(baseAmount));
+        var baseAmount = GetSubtotal() + GetShippingAmount();
+        var taxedAmount = baseAmount + GetTaxAmount();
+
+        var amount = 0.00m;
+        foreach (var surcharge in _surcharges)
+        {
+            if (surcharge.TaxTreatment is Taxes.TaxTreatment.Standard)
+            {
+                // If the surcharge is taxable, we need to apply it after taxes
+                amount += surcharge.CalculateSurchargeAmount(taxedAmount);
+            }
+            else
+            {
+                // Non-taxable surcharges are applied directly to the base amount
+                amount += surcharge.CalculateSurchargeAmount(baseAmount);
+            }
+        }
+
+        return amount;
     }
+
+    /// <summary>
+    /// Gets the total amount before taxes, including discounts, surcharges, and shipping
+    /// </summary>
+    /// <returns></returns>
+    public Decimal GetTotalAmount()
+        => GetSubtotal() - GetDiscountAmount() + GetSurchargeAmount() + GetShippingAmount();
+
+    /// <summary>
+    /// Gets the total tax amount. NOTE: Some surcharges may be taxable, so this is not just the sum of line item taxes.
+    /// </summary>
+    public Decimal GetTaxAmount()
+        => _lineItems.Sum(item => item.GetTaxTotal());
 
     /// <summary>
     /// Gets the final total amount due
     /// </summary>
-    public Decimal GetTotal()
-        => GetTotalWithDiscountsAndShipping() + GetTotalTax() + GetTotalSurcharges();
+    public Decimal GetGrandTotal()
+        => GetTotalAmount() + GetTaxAmount();
 
     /// <summary>
     /// Gets the total amount paid
@@ -361,5 +400,5 @@ public class Invoice : FullAuditedAggregateRoot<Guid>
     /// <summary>
     /// Gets the outstanding balance of the invoice
     /// </summary>
-    public Decimal GetBalance() => GetTotal() - GetTotalPaid() + GetTotalRefunded();
+    public Decimal GetBalance() => GetGrandTotal() - GetTotalPaid() + GetTotalRefunded();
 }

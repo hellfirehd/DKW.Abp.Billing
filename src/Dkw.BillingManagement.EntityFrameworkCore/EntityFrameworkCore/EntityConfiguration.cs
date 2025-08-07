@@ -30,15 +30,14 @@ public abstract class EntityConfiguration<TEntity> : IEntityTypeConfiguration<TE
     };
 
     protected abstract string GetTableName();
+    protected virtual string GetPrimaryKeyName() => $"{typeof(TEntity).Name}Id";
 
     public virtual void Configure(EntityTypeBuilder<TEntity> builder)
     {
-        var name = typeof(TEntity).Name;
-
         builder.ToTable(BillingManagementDbProperties.DbTablePrefix + GetTableName(), BillingManagementDbProperties.DbSchema);
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName(name + "Id").ValueGeneratedOnAdd();
+        builder.Property(x => x.Id).HasColumnName(GetPrimaryKeyName()).ValueGeneratedOnAdd();
 
         if (typeof(TEntity).GetInterfaces().Contains(typeof(IHasCorrelationId)))
         {

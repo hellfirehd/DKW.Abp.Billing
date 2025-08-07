@@ -18,8 +18,4 @@
         <ProjectReference Include="..\Dkw.BillingManagement.Application.Tests\Dkw.BillingManagement.Application.Tests.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="EntityFrameworkCore\Domains\" />
-    </ItemGroup>
-
 </Project>

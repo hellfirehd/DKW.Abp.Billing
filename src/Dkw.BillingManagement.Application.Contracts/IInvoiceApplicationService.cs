@@ -29,12 +29,12 @@ public interface IInvoiceApplicationService : IApplicationService
     /// <summary>
     /// Gets all invoices with optional filtering
     /// </summary>
-    Task<List<InvoiceDto>> GetInvoicesAsync(InvoiceFilter filter, CancellationToken cancellationToken = default);
+    Task<IEnumerable<InvoiceDto>> GetInvoicesAsync(InvoiceFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a new invoice
     /// </summary>
-    Task<Guid> CreateInvoiceAsync(CreateInvoice command, CancellationToken cancellationToken = default);
+    Task<Result<Guid>> CreateInvoiceAsync(CreateInvoice command, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a line item to an invoice

@@ -13,7 +13,7 @@
 // program. If not, see <https://www.gnu.org/licenses/>.
 
 using Dkw.BillingManagement.Customers;
-using Dkw.BillingManagement.Invoices;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Dkw.BillingManagement.Shipping;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 

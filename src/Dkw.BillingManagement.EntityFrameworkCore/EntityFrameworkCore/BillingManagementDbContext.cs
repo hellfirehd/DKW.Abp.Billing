@@ -14,6 +14,7 @@
 
 using Dkw.BillingManagement.Customers;
 using Dkw.BillingManagement.Invoices;
+using Dkw.BillingManagement.Invoices.LineItems;
 using Dkw.BillingManagement.Items;
 using Dkw.BillingManagement.Payments;
 using Dkw.BillingManagement.Provinces;
@@ -36,6 +37,7 @@ public class BillingManagementDbContext(DbContextOptions<BillingManagementDbCont
     public DbSet<Payment> Payments { get; set; } = default!;
     public DbSet<PaymentMethod> PaymentMethods { get; set; } = default!;
     public DbSet<ItemBase> ItemBase { get; set; } = default!;
+    public DbSet<ItemInfo> ItemInfo { get; set; } = default!;
     public DbSet<Province> Provinces { get; set; } = default!;
     public DbSet<Refund> Refunds { get; set; } = default!;
     public DbSet<Tax> Taxes { get; set; } = default!;

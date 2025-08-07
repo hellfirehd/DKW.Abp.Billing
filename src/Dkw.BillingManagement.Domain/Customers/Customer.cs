@@ -13,7 +13,6 @@
 // program. If not, see <https://www.gnu.org/licenses/>.
 
 using Dkw.BillingManagement.Payments;
-using Dkw.BillingManagement.Shipping;
 using Volo.Abp.Domain.Entities;
 
 namespace Dkw.BillingManagement.Customers;
@@ -28,12 +27,12 @@ public class Customer : Entity<Guid>
         // Parameterless constructor for EF Core/JSON serialization
     }
 
-    public Customer(String name, Email email, IReadOnlyList<Address> addresses, CustomerType customerType = CustomerType.Regular, CustomerTaxType recipientStatus = CustomerTaxType.Regular)
+    public Customer(String name, Email email, IReadOnlyList<Address> addresses, CustomerType customerType = CustomerType.Regular, TaxStatus recipientStatus = TaxStatus.Regular)
     {
         Name = name;
         Email = email;
         CustomerType = customerType;
-        RecipientStatus = recipientStatus;
+        TaxStatus = recipientStatus;
 
         _addresses.AddRange(addresses);
     }
@@ -55,7 +54,7 @@ public class Customer : Entity<Guid>
     public virtual IReadOnlyList<Address> Addresses => _addresses;
     public virtual IReadOnlyList<PaymentMethod> PaymentMethods => _paymentMethods;
     public virtual CustomerType CustomerType { get; protected set; } = CustomerType.Regular;
-    public virtual CustomerTaxType RecipientStatus { get; protected set; } = CustomerTaxType.Regular;
+    public virtual TaxStatus TaxStatus { get; protected set; } = TaxStatus.Regular;
 
     public virtual Address ShippingAddress
         => Addresses.FirstOrDefault(a => a.IsShippingAddress)
@@ -66,8 +65,6 @@ public class Customer : Entity<Guid>
         => Addresses.FirstOrDefault(a => a.IsBillingAddress)
         ?? Addresses.FirstOrDefault(a => a.IsDefault)
         ?? throw new BillingManagementException(ErrorCodes.NotFound, "This customer does not have a billing address or default address.");
-
-    public virtual ShippingInfo PreferredShipping { get; protected set; } = ShippingInfo.Empty;
 
     public void AddAddress(Address address)
     {

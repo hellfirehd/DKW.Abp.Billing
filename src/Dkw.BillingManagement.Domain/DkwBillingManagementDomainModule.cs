@@ -12,8 +12,6 @@
 // You should have received a copy of the GNU Affero General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-using Dkw.BillingManagement.Invoices;
-using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
 using Volo.Abp.Domain;
 using Volo.Abp.Modularity;
@@ -28,8 +26,8 @@ namespace Dkw.BillingManagement;
 [DependsOn(typeof(DkwBillingManagementDomainSharedModule))]
 public class DkwBillingManagementDomainModule : AbpModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-        context.Services.AddTransient<IInvoiceManager, InvoiceManager>();
-    }
+    //public override void ConfigureServices(ServiceConfigurationContext context)
+    //{
+    //    context.Services.AddTransient<IInvoiceManager, InvoiceManager>();
+    //}
 }
